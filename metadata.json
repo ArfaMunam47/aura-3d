@@ -1,0 +1,6 @@
+{
+  "name": "AURA — Pure Form. Refined Flow.",
+  "description": "AURA — a single, hand-finished glass vessel. Pure form. Refined flow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

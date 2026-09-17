@@ -4,9 +4,9 @@ import { createServer } from 'vite';
 createServer({
   root: 'path',
   server: {
-    port: 5173,
-    open: true,
-    host: true
+    port: 3000,
+    open: false,
+    host: '0.0.0.0'
   }
 }).then(server => {
   console.log('🚀 Server running at:', server.httpServer.address);

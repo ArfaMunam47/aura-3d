@@ -22,5 +22,5 @@ process.on('SIGINT', () => {
 });
 
 console.log('🚀 Starting AURA Server...');
-console.log('📱 Open your browser to: http://localhost:5173/');
+console.log('📱 Open your browser to: http://localhost:3000/');
 console.log('💡 Press Ctrl+C to stop the server\n');
