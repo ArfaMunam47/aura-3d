@@ -1,5 +1,6 @@
 import { addToCart, updateQty, removeFromCart, onCartChange, getState, clearCart, formatPrice } from './cart.js';
-import { PRODUCT, findSize, findFinish } from './product-data.js';
+import { PRODUCT, findSize, findFinish, findVariant } from './product-data.js';
+import { init3DExperience, setBottleFinish, setBottleSize, setCollectionVariant, setCraftFocus } from './scene-3d.js';
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -9,11 +10,13 @@ function ready(fn) {
 }
 
 function boot() {
+  init3DExperience('aura-canvas-container');
   initLoader();
   initNav();
-  initHeroVideo();
   initScrollReveals();
-  initShowcaseTilt();
+  initMaterialsInspection();
+  initCollectionShowcase();
+  initGrandCTA();
   initShop();
   initCart();
   initCheckout();
@@ -21,47 +24,78 @@ function boot() {
 }
 
 // ---------------------------------------------------------------------------
-// Loader
+// Loader: Smooth transition into 3D experience
 // ---------------------------------------------------------------------------
 
 function initLoader() {
   const loader = document.getElementById('loader');
   const fill = document.getElementById('loader-fill');
   if (!loader) return;
-  let p = 0;
-  const tick = setInterval(() => {
-    p = Math.min(94, p + Math.random() * 22);
-    if (fill) fill.style.width = p + '%';
-  }, 110);
-  const finish = () => {
-    clearInterval(tick);
-    if (fill) fill.style.width = '100%';
-    setTimeout(() => loader.classList.add('hidden'), 250);
-  };
-  // Finish once the hero video can play, or after a short cap either way.
-  const video = document.getElementById('hero-video');
-  let done = false;
-  const safeFinish = () => { if (!done) { done = true; finish(); } };
-  if (video) {
-    video.addEventListener('canplay', safeFinish, { once: true });
-    video.addEventListener('error', safeFinish, { once: true });
-  }
-  setTimeout(safeFinish, 2200);
+
+  let progress = 0;
+  const timer = setInterval(() => {
+    progress += Math.random() * 24 + 14;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(timer);
+      if (fill) fill.style.width = '100%';
+      setTimeout(() => {
+        loader.classList.add('hidden');
+      }, 300);
+    } else {
+      if (fill) fill.style.width = `${progress}%`;
+    }
+  }, 80);
 }
 
 // ---------------------------------------------------------------------------
-// Nav: transparent -> solid on scroll, mobile menu
+// Nav: Transparent -> Solid on scroll, active section indication, mobile menu
 // ---------------------------------------------------------------------------
 
 function initNav() {
   const nav = document.getElementById('nav');
   const toggle = document.getElementById('nav-toggle');
   const menu = document.getElementById('mobile-menu');
+  const navLinks = document.querySelectorAll('.nav-links .nav-link');
+
+  const sections = [
+    { id: 'intro', link: document.querySelector('.nav-link[data-section="intro"]') },
+    { id: 'design', link: document.querySelector('.nav-link[data-section="design"]') },
+    { id: 'materials', link: document.querySelector('.nav-link[data-section="materials"]') },
+    { id: 'collection', link: document.querySelector('.nav-link[data-section="collection"]') },
+    { id: 'story', link: document.querySelector('.nav-link[data-section="story"]') },
+    { id: 'shop', link: document.querySelector('.nav-link[data-section="shop"]') },
+  ];
 
   function onScroll() {
-    if (window.scrollY > window.innerHeight * 0.72) nav.classList.add('solid');
+    const scrollY = window.scrollY;
+    if (scrollY > 60) nav.classList.add('solid');
     else nav.classList.remove('solid');
+
+    const middleY = scrollY + window.innerHeight * 0.4;
+    let currentId = '';
+
+    for (const sec of sections) {
+      const el = document.getElementById(sec.id);
+      if (el) {
+        const top = el.offsetTop;
+        const bottom = top + el.offsetHeight;
+        if (middleY >= top && middleY <= bottom) {
+          currentId = sec.id;
+          break;
+        }
+      }
+    }
+
+    navLinks.forEach((a) => {
+      if (a.getAttribute('data-section') === currentId) {
+        a.classList.add('active');
+      } else {
+        a.classList.remove('active');
+      }
+    });
   }
+
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
@@ -71,6 +105,7 @@ function initNav() {
       toggle.setAttribute('aria-expanded', String(open));
       toggle.classList.toggle('open', open);
     });
+
     menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
       menu.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
@@ -80,45 +115,11 @@ function initNav() {
 }
 
 // ---------------------------------------------------------------------------
-// Hero video: graceful fallback if autoplay/video fails
-// ---------------------------------------------------------------------------
-
-function initHeroVideo() {
-  const video = document.getElementById('hero-video');
-  const fallback = document.getElementById('hero-fallback');
-  if (!video) return;
-
-  const showFallback = () => {
-    console.warn('[AURA] Hero video unavailable — using the poster image instead.');
-    video.style.display = 'none';
-    if (fallback) fallback.hidden = false;
-  };
-
-  video.addEventListener('error', showFallback);
-
-  // Some mobile browsers block autoplay even when muted+inline; if play()
-  // is rejected, fall back to the static poster rather than a stalled video.
-  const playPromise = video.play();
-  if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {
-      // Retry once on first user interaction (common mobile requirement).
-      const retry = () => {
-        video.play().catch(showFallback);
-        window.removeEventListener('touchstart', retry);
-        window.removeEventListener('click', retry);
-      };
-      window.addEventListener('touchstart', retry, { once: true, passive: true });
-      window.addEventListener('click', retry, { once: true });
-    });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Scroll reveals (fade/scale in as sections enter view)
+// Scroll Reveals
 // ---------------------------------------------------------------------------
 
 function initScrollReveals() {
-  const targets = document.querySelectorAll('.reveal-in, .details-grid .detail-card, .feature-row, .philosophy-inner');
+  const targets = document.querySelectorAll('.intro-card, .design-card, .material-card, .story-card, .collection-card, .cta-final-inner, .shop-panel');
   if (!targets.length) return;
 
   if (reducedMotion || !('IntersectionObserver' in window)) {
@@ -133,70 +134,138 @@ function initScrollReveals() {
         io.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.2 });
+  }, { threshold: 0.15 });
 
   targets.forEach((t) => io.observe(t));
 }
 
 // ---------------------------------------------------------------------------
-// Showcase: pseudo-3D tilt + moving sheen + detail pins
-// (Single studio photo — this is an honest bounded tilt/lighting effect,
-// not a fake 360° rotation.)
+// Materials & Craft Inspection (Exact Same 3D Bottle)
 // ---------------------------------------------------------------------------
 
-function initShowcaseTilt() {
-  const stage = document.getElementById('showcase-stage');
-  const tilt = document.getElementById('showcase-tilt');
-  const sheen = document.getElementById('showcase-sheen');
-  if (!stage || !tilt) return;
+function initMaterialsInspection() {
+  const pills = document.querySelectorAll('.craft-pill');
+  const cards = document.querySelectorAll('.material-card');
 
-  if (!reducedMotion && !window.matchMedia('(hover: none)').matches) {
-    let raf = null;
-    function onMove(e) {
-      const rect = stage.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;  // 0..1
-      const y = (e.clientY - rect.top) / rect.height;  // 0..1
-      const rx = (0.5 - y) * 12;
-      const ry = (x - 0.5) * 16;
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        tilt.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-        if (sheen) sheen.style.background =
-          `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.16), transparent 45%)`;
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const craft = pill.getAttribute('data-craft');
+      pills.forEach((p) => {
+        p.classList.remove('active');
+        p.setAttribute('aria-selected', 'false');
       });
-    }
-    function onLeave() {
-      tilt.style.transform = 'rotateX(0deg) rotateY(0deg)';
-      if (sheen) sheen.style.background = 'transparent';
-    }
-    stage.addEventListener('mousemove', onMove);
-    stage.addEventListener('mouseleave', onLeave);
-  }
+      pill.classList.add('active');
+      pill.setAttribute('aria-selected', 'true');
 
-  // Detail pins
-  const caption = document.getElementById('pin-caption');
-  document.querySelectorAll('.pin').forEach((pin) => {
-    const show = () => {
-      if (!caption) return;
-      caption.textContent = pin.getAttribute('data-caption');
-      caption.hidden = false;
-      pin.classList.add('active');
-    };
-    const hide = () => {
-      if (!caption) return;
-      caption.hidden = true;
-      pin.classList.remove('active');
-    };
-    pin.addEventListener('mouseenter', show);
-    pin.addEventListener('focus', show);
-    pin.addEventListener('mouseleave', hide);
-    pin.addEventListener('blur', hide);
-    pin.addEventListener('click', (e) => { e.preventDefault(); show(); });
+      // Update 3D Camera focus on exact same bottle
+      setCraftFocus(craft);
+
+      // Highlight corresponding card
+      cards.forEach((card) => {
+        if (card.getAttribute('data-craft-target') === craft) {
+          card.classList.add('craft-active');
+        } else {
+          card.classList.remove('craft-active');
+        }
+      });
+    });
+  });
+
+  // Clicking directly on a material card triggers craft inspection
+  cards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const target = card.getAttribute('data-craft-target');
+      const targetPill = document.querySelector(`.craft-pill[data-craft="${target}"]`);
+      if (targetPill) targetPill.click();
+    });
   });
 }
 
 // ---------------------------------------------------------------------------
-// Shop: size / finish / quantity selection
+// Collection Showcase: 3D Multi-Variant Luxury Product Library
+// ---------------------------------------------------------------------------
+
+let activeCollectionVariant = 'original';
+
+function initCollectionShowcase() {
+  const pills = document.querySelectorAll('.variant-pill');
+  const badgeEl = document.getElementById('col-badge');
+  const priceEl = document.getElementById('col-price');
+  const titleEl = document.getElementById('col-title');
+  const subEl = document.getElementById('col-sub');
+  const descEl = document.getElementById('col-desc');
+  const notesEl = document.getElementById('col-notes');
+  const orderBtn = document.getElementById('col-order-btn');
+  const cardEl = document.getElementById('collection-active-card');
+
+  function selectVariant(id) {
+    const variant = findVariant(id);
+    if (!variant) return;
+
+    activeCollectionVariant = id;
+
+    // 1. Update 3D Bottle Materials & Lighting in real time
+    setCollectionVariant(id);
+
+    // 2. Animate card content smoothly
+    if (cardEl) {
+      cardEl.classList.add('morphing');
+      setTimeout(() => {
+        if (badgeEl) badgeEl.textContent = variant.tag;
+        if (priceEl) priceEl.textContent = `$${variant.price}`;
+        if (titleEl) titleEl.textContent = variant.name;
+        if (subEl) subEl.textContent = variant.subtitle;
+        if (descEl) descEl.textContent = variant.description;
+        if (notesEl) notesEl.textContent = variant.notes;
+        cardEl.classList.remove('morphing');
+      }, 160);
+    }
+  }
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      pills.forEach((p) => {
+        p.classList.remove('active');
+        p.setAttribute('aria-selected', 'false');
+      });
+      pill.classList.add('active');
+      pill.setAttribute('aria-selected', 'true');
+
+      const variantId = pill.getAttribute('data-variant');
+      selectVariant(variantId);
+    });
+  });
+
+  if (orderBtn) {
+    orderBtn.addEventListener('click', () => {
+      const variant = findVariant(activeCollectionVariant);
+      addToCart('500', 'onyx', 1);
+      showToast(`Reserved ${variant.name} (500ml) in your bag`);
+      openCart();
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Grand Final Call To Action (Before Footer)
+// ---------------------------------------------------------------------------
+
+function initGrandCTA() {
+  const orderNowBtn = document.getElementById('cta-order-now');
+  if (orderNowBtn) {
+    orderNowBtn.addEventListener('click', () => {
+      const shopSec = document.getElementById('shop');
+      if (shopSec) {
+        shopSec.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        openCart();
+      }
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shop Configurator: Size / Finish / Quantity selection + 3D live synchronizer
 // ---------------------------------------------------------------------------
 
 let selectedSize = PRODUCT.sizes[0].id;
@@ -208,21 +277,19 @@ function initShop() {
   const finishRow = document.getElementById('finish-options');
   const priceEl = document.getElementById('shop-price');
   const qtyEl = document.getElementById('qty-value');
-  const shopImg = document.getElementById('shop-img');
-  const showcaseImg = document.getElementById('showcase-img');
+  const sizeSubLabel = document.getElementById('selected-size-label');
+  const finishSubLabel = document.getElementById('selected-finish-label');
 
   function updatePrice() {
     const size = findSize(selectedSize);
     if (priceEl) priceEl.textContent = formatPrice(size.price);
+    if (sizeSubLabel) sizeSubLabel.textContent = `${size.label} · ${size.sub || 'Everyday'}`;
   }
 
-  function updateFinishVisual() {
+  function updateFinish() {
     const finish = findFinish(selectedFinish);
-    const filterValue = finish.filter === 'none' ? '' : finish.filter;
-    // Apply a subtle overall tint so the swatch choice is visible on the
-    // single studio photo without fabricating extra product photography.
-    if (shopImg) shopImg.style.filter = filterValue;
-    if (showcaseImg) showcaseImg.style.filter = filterValue;
+    if (finishSubLabel) finishSubLabel.textContent = `${finish.label} · Anodized`;
+    setBottleFinish(selectedFinish);
   }
 
   if (sizeRow) {
@@ -236,6 +303,7 @@ function initShop() {
         btn.setAttribute('aria-checked', 'true');
         selectedSize = btn.getAttribute('data-size');
         updatePrice();
+        setBottleSize(selectedSize);
       });
     });
   }
@@ -250,7 +318,7 @@ function initShop() {
         btn.classList.add('active');
         btn.setAttribute('aria-checked', 'true');
         selectedFinish = btn.getAttribute('data-finish');
-        updateFinishVisual();
+        updateFinish();
       });
     });
   }
@@ -271,18 +339,18 @@ function initShop() {
     addToCart(selectedSize, selectedFinish, selectedQty);
     addBtn.classList.add('pressed');
     setTimeout(() => addBtn.classList.remove('pressed'), 220);
-    showToast('Added to bag');
+    showToast(`Added ${selectedQty} × AURA to bag`);
     selectedQty = 1;
     if (qtyEl) qtyEl.textContent = '1';
     openCart();
   });
 
   updatePrice();
-  updateFinishVisual();
+  updateFinish();
 }
 
 // ---------------------------------------------------------------------------
-// Cart drawer
+// Cart Drawer
 // ---------------------------------------------------------------------------
 
 function openCart() {
@@ -320,19 +388,18 @@ function renderCart(state) {
     if (footEl) footEl.hidden = false;
     linesEl.innerHTML = state.lines.map((line) => `
       <div class="cart-line" data-key="${line.key}">
-        <img src="${PRODUCT.image}" alt="" class="cart-line-img" />
         <div class="cart-line-info">
           <span class="cart-line-name">${PRODUCT.name}</span>
-          <span class="cart-line-variant">${line.size.label} &middot; ${line.finish.label}</span>
+          <div class="cart-line-variant">${line.size.label} &middot; ${line.finish.label}</div>
           <div class="cart-line-qty">
             <button class="qty-btn small" data-action="dec" aria-label="Decrease quantity">–</button>
             <span>${line.qty}</span>
             <button class="qty-btn small" data-action="inc" aria-label="Increase quantity">+</button>
+            <button class="cart-remove-btn" data-action="remove" aria-label="Remove item">Remove</button>
           </div>
         </div>
-        <div class="cart-line-right">
-          <span class="cart-line-price">${formatPrice(line.lineTotal)}</span>
-          <button class="cart-line-remove" data-action="remove" aria-label="Remove item">Remove</button>
+        <div class="cart-line-price">
+          ${formatPrice(line.lineTotal)}
         </div>
       </div>
     `).join('');
@@ -390,7 +457,7 @@ function initCart() {
 }
 
 // ---------------------------------------------------------------------------
-// Checkout (client-side demo — no backend exists to send this to)
+// Checkout Drawer
 // ---------------------------------------------------------------------------
 
 function initCheckout() {
@@ -406,8 +473,8 @@ function initCheckout() {
     const state = getState();
     if (summary) {
       summary.innerHTML = state.lines.map((l) =>
-        `<div class="checkout-summary-line"><span>${l.size.label} &middot; ${l.finish.label} &times; ${l.qty}</span><span>${formatPrice(l.lineTotal)}</span></div>`
-      ).join('') + `<div class="checkout-summary-line total"><span>Total</span><span>${formatPrice(state.subtotal)}</span></div>`;
+        `<div class="checkout-summary-line" style="display:flex;justify-content:space-between;padding:4px 0;"><span>${l.size.label} &middot; ${l.finish.label} &times; ${l.qty}</span><span>${formatPrice(l.lineTotal)}</span></div>`
+      ).join('') + `<div class="checkout-summary-line total" style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(243,237,226,0.1);margin-top:6px;font-weight:600;color:var(--c-champagne)"><span>Total</span><span>${formatPrice(state.subtotal)}</span></div>`;
     }
     toggleDrawer('cart-drawer', false);
     toggleDrawer('checkout-drawer', true);
@@ -434,7 +501,7 @@ function initCheckout() {
 }
 
 // ---------------------------------------------------------------------------
-// Newsletter (client-side only — no backend to send this to)
+// Newsletter
 // ---------------------------------------------------------------------------
 
 function initNewsletter() {
@@ -445,12 +512,12 @@ function initNewsletter() {
     const input = form.querySelector('input[type="email"]');
     if (!input || !input.checkValidity()) return;
     input.value = '';
-    showToast('Subscribed');
+    showToast('Subscribed to AURA Chronicle');
   });
 }
 
 // ---------------------------------------------------------------------------
-// Toast
+// Toast Notification
 // ---------------------------------------------------------------------------
 
 let toastTimer = null;
@@ -464,7 +531,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => { toast.hidden = true; }, 250);
-  }, 1800);
+  }, 2200);
 }
 
 ready(boot);

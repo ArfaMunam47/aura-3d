@@ -2,7 +2,7 @@ import { createServer } from 'vite';
 
 // Simple server script for testing
 createServer({
-  root: 'path',
+  root: '.',
   server: {
     port: 3000,
     open: false,

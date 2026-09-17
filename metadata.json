@@ -1,6 +1,6 @@
 {
   "name": "AURA — Pure Form. Refined Flow.",
-  "description": "AURA — a single, hand-finished glass vessel. Pure form. Refined flow.",
+  "description": "A single, hand-finished borosilicate glass vessel with precision aluminum closure and real-time configurator.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

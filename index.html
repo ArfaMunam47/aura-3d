@@ -2,20 +2,623 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function() {
+      try {
+        var _nativeFetch = (typeof window !== 'undefined' && typeof window.fetch === 'function')
+          ? window.fetch.bind(window)
+          : null;
+        var _currentFetch = _nativeFetch;
+
+        function getFetch() {
+          return _currentFetch;
+        }
+        function setFetch(fn) {
+          _currentFetch = fn;
+        }
+
+        try {
+          Object.defineProperty(window, 'fetch', {
+            get: getFetch,
+            set: setFetch,
+            configurable: true,
+            enumerable: true
+          });
+        } catch (err) {}
+
+        try {
+          if (typeof Window !== 'undefined' && Window.prototype) {
+            Object.defineProperty(Window.prototype, 'fetch', {
+              get: getFetch,
+              set: setFetch,
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (err) {}
+      } catch (e) {
+        console.warn('Fetch setter setup:', e);
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AURA</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #0b0b0c; }
-  </style>
-  <meta http-equiv="refresh" content="0; url=/path/index.html" />
-  <script>window.location.replace('/path/index.html');</script>
+  <meta name="description" content="A single, hand-finished borosilicate glass vessel with precision aluminum closure and real-time configurator." />
+  <meta property="og:title" content="AURA — Pure Form. Refined Flow." />
+  <meta property="og:description" content="A single, hand-finished borosilicate glass vessel with precision aluminum closure and real-time configurator." />
+  <meta name="theme-color" content="#0b0b0c" />
+  <title>AURA — Pure Form. Refined Flow.</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <noscript>
-    <p style="color:#f3ede2;font-family:sans-serif;padding:2rem;">
-      <a href="/path/index.html" style="color:#c9a876;">Continue to AURA</a>
-    </p>
-  </noscript>
+
+<!-- Persistent 3D Canvas Stage (Stable, cinematic, non-intrusive) -->
+<div id="aura-canvas-container" class="aura-canvas-container" aria-hidden="true"></div>
+
+<!-- Cinematic Loading Screen -->
+<div id="loader" role="status" aria-live="polite">
+  <div class="loader-mark">AURA</div>
+  <div class="loader-sub">Pure Form · Refined Flow</div>
+  <div class="loader-line"><div class="loader-line-fill" id="loader-fill"></div></div>
+</div>
+
+<a class="skip-link" href="#shop" id="skip-to-shop">Skip to collection</a>
+
+<!-- ============================== TOP NAV ============================== -->
+<header id="nav">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-mark" id="nav-logo" aria-label="AURA Home">AURA</a>
+    <nav class="nav-links" id="nav-links" aria-label="Primary">
+      <a href="#intro" class="nav-link" data-section="intro">The Object</a>
+      <a href="#design" class="nav-link" data-section="design">Design</a>
+      <a href="#materials" class="nav-link" data-section="materials">Materials</a>
+      <a href="#collection" class="nav-link" data-section="collection">Collection</a>
+      <a href="#story" class="nav-link" data-section="story">Story</a>
+      <a href="#shop" class="nav-link nav-shop-cta" data-section="shop">Acquire</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-bag" id="bag-toggle" aria-haspopup="dialog" aria-controls="cart-drawer" aria-label="Open shopping bag">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="bag-count" id="bag-count" hidden>0</span>
+      </button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation">
+  <a href="#intro" class="mobile-nav-link">The Object</a>
+  <a href="#design" class="mobile-nav-link">Design</a>
+  <a href="#materials" class="mobile-nav-link">Materials</a>
+  <a href="#story" class="mobile-nav-link">Story</a>
+  <a href="#shop" class="mobile-nav-link">Acquire Collection</a>
+</div>
+
+<main id="root">
+
+  <!-- ============================== 1. CINEMATIC OPENING (HERO) ============================== -->
+  <section id="hero" class="hero scene-section">
+    <div class="hero-scrim"></div>
+    <div class="hero-content">
+      <span class="eyebrow gold">AURA · REFINED HYDRATION VESSEL</span>
+      <h1 class="hero-title">Pure Form.<br/>Refined Flow.</h1>
+      <p class="hero-sub">A single, hand-finished vessel in borosilicate glass and machined aluminum. Designed to bring serenity to daily ritual.</p>
+      <div class="hero-ctas">
+        <a href="#shop" class="btn btn-primary" id="hero-cta-shop">Acquire AURA</a>
+        <a href="#design" class="btn btn-secondary" id="hero-cta-design">Design Story</a>
+      </div>
+    </div>
+    <div class="hero-scroll-cue" aria-hidden="true">
+      <span>Scroll to explore</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ============================== 2. AURA PRODUCT INTRODUCTION ============================== -->
+  <section id="intro" class="intro scene-section">
+    <div class="intro-inner">
+      <div class="intro-card content-card reveal-in">
+        <span class="eyebrow">01 — The Object</span>
+        <h2 class="display-title">One object.<br/>No excess.</h2>
+        <p class="body-text">Every line of AURA was drawn, then removed, then drawn again — until nothing remained but the shape water naturally desires.</p>
+        <p class="body-text secondary">Blown borosilicate glass paired with a precision knurled aluminum cap. An authentic single-piece vessel engineered for perfect tactile balance and effortless daily hydration.</p>
+        <div class="intro-specs">
+          <div class="spec-badge">
+            <span class="spec-value">1.52</span>
+            <span class="spec-label">Borosilicate IOR</span>
+          </div>
+          <div class="spec-badge">
+            <span class="spec-value">100%</span>
+            <span class="spec-label">Zero Plastic Taste</span>
+          </div>
+          <div class="spec-badge">
+            <span class="spec-value">0.4kg</span>
+            <span class="spec-label">Weighted Crystal Foot</span>
+          </div>
+        </div>
+      </div>
+      <div class="intro-visual-spacer" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ============================== 3. PRODUCT DESIGN (ANATOMY & GEOMETRY) ============================== -->
+  <section id="design" class="design scene-section">
+    <div class="section-head text-center">
+      <span class="eyebrow center">02 — Product Design</span>
+      <h2 class="display-title center">Geometry of Flow</h2>
+      <p class="body-text center">Calibrated contours engineered for tactile presence, structural permanence, and fluid delivery.</p>
+    </div>
+
+    <div class="design-grid">
+      <div class="design-card content-card">
+        <div class="card-accent-num">01</div>
+        <h3 class="card-title">Machined Cap</h3>
+        <p class="card-desc">Turned from a single billet of aircraft-grade aluminum on a diamond lathe. Precision knurled band provides reliable grip under any condition.</p>
+      </div>
+
+      <div class="design-card content-card">
+        <div class="card-accent-num">02</div>
+        <h3 class="card-title">Flame-Polished Lip</h3>
+        <p class="card-desc">Contoured neck taper engineered for a completely laminar, drip-free fluid delivery. Drinking feels quiet and natural with every sip.</p>
+      </div>
+
+      <div class="design-card content-card">
+        <div class="card-accent-num">03</div>
+        <h3 class="card-title">Borosilicate Cylinder</h3>
+        <p class="card-desc">High-purity glass blown to a uniform 2.8mm wall thickness. Thermal-shock resilient from icy cold to boiling teas without stress fractures.</p>
+      </div>
+
+      <div class="design-card content-card">
+        <div class="card-accent-num">04</div>
+        <h3 class="card-title">Solid Crystal Foot</h3>
+        <p class="card-desc">A generous, solid glass base lowers the center of gravity, firmly anchoring the vessel to desks, nightstands, and stone countertops.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 4. MATERIALS AND DETAILS (EXACT SAME 3D BOTTLE) ============================== -->
+  <section id="materials" class="materials scene-section">
+    <div class="materials-header text-center">
+      <span class="eyebrow center">03 — Materials &amp; Detail</span>
+      <h2 class="display-title center">Honest Materiality</h2>
+      <p class="body-text center">Every element calibrated for longevity and optical purity. Select a detail below to inspect the physical craftsmanship on the live vessel.</p>
+    </div>
+
+    <!-- Craft Focus Interactive Switcher -->
+    <div class="craft-controls" role="tablist" aria-label="Craft Inspection Controls">
+      <button class="craft-pill active" data-craft="cap" role="tab" aria-selected="true" id="craft-btn-cap">
+        <span class="pill-num">01</span>
+        <span class="pill-label">Anodized Closure</span>
+      </button>
+      <button class="craft-pill" data-craft="label" role="tab" aria-selected="false" id="craft-btn-label">
+        <span class="pill-num">02</span>
+        <span class="pill-label">Fused Enamel Mark</span>
+      </button>
+      <button class="craft-pill" data-craft="base" role="tab" aria-selected="false" id="craft-btn-base">
+        <span class="pill-num">03</span>
+        <span class="pill-label">Crystal Punt Foot</span>
+      </button>
+      <button class="craft-pill" data-craft="reset" role="tab" aria-selected="false" id="craft-btn-reset">
+        <span class="pill-num">04</span>
+        <span class="pill-label">Full Vessel</span>
+      </button>
+    </div>
+
+    <div class="materials-inspect-container">
+      <div class="materials-grid">
+        <div class="material-card content-card" id="mat-card-cap" data-craft-target="cap">
+          <div class="card-accent-num">01</div>
+          <h3 class="card-title">Anodized Billet Closure</h3>
+          <p class="card-desc">Diamond-turned from aircraft-grade 6061 aluminum alloy. Micro-knurled circumferential grip band provides positive tactile engagement even with wet hands.</p>
+          <div class="mat-spec-list">
+            <span class="mat-spec-chip">Micro-Knurled Band</span>
+            <span class="mat-spec-chip">Laser Monogram</span>
+            <span class="mat-spec-chip">Food-Safe Seal</span>
+          </div>
+        </div>
+
+        <div class="material-card content-card" id="mat-card-label" data-craft-target="label">
+          <div class="card-accent-num">02</div>
+          <h3 class="card-title">Kiln-Fused Silkscreen</h3>
+          <p class="card-desc">The AURA identity is silkscreened with mineral enamel ink directly onto the glass wall and kiln-fired at 620°C, permanently fusing with the borosilicate substrate.</p>
+          <div class="mat-spec-list">
+            <span class="mat-spec-chip">Permanent Mineral Ink</span>
+            <span class="mat-spec-chip">Tactile Relief</span>
+            <span class="mat-spec-chip">Dishwasher Proof</span>
+          </div>
+        </div>
+
+        <div class="material-card content-card" id="mat-card-base" data-craft-target="base">
+          <div class="card-accent-num">03</div>
+          <h3 class="card-title">Solid Crystal Punt Foot</h3>
+          <p class="card-desc">A solid 0.4kg crystal glass base with an arched internal punt dome. Anchors the vessel firmly to stone counters and mahogany desks while casting prismatic caustics.</p>
+          <div class="mat-spec-list">
+            <span class="mat-spec-chip">1.52 Borosilicate IOR</span>
+            <span class="mat-spec-chip">0.4kg Low Ballast</span>
+            <span class="mat-spec-chip">Anti-Tip Bevel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 5. THE AURA STORY ============================== -->
+  <section id="story" class="story-section scene-section">
+    <div class="story-inner">
+      <div class="story-visual-spacer" aria-hidden="true"></div>
+      <div class="story-card content-card reveal-in">
+        <span class="eyebrow">04 — Origin</span>
+        <h2 class="display-title">Formed in Copenhagen</h2>
+        <p class="body-text">Conceived in our Nordic studio, each vessel undergoes a thirty-stage finishing cycle. Every contour is flame-polished and inspected by hand under calibrated raking light before receiving its batch designation.</p>
+        <p class="body-text secondary">Designed to eliminate the constant churn of disposable plastic bottles, AURA was created to be a permanent companion that gains character through decades of daily use.</p>
+        <div class="story-metrics">
+          <div class="metric-item">
+            <span class="metric-val">30</span>
+            <span class="metric-label">Finishing Steps</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-val">150°C</span>
+            <span class="metric-label">Thermal Shock Tested</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-val">10,000</span>
+            <span class="metric-label">Refill Benchmark</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 6. BRAND PHILOSOPHY ============================== -->
+  <section id="philosophy" class="philosophy scene-section">
+    <div class="cinema-letterbox top" aria-hidden="true"></div>
+    <div class="philosophy-content text-center">
+      <span class="eyebrow center gold">05 — Philosophy</span>
+      <h2 class="display-title center cinema-title">An object,<br/>not an appliance.</h2>
+      <p class="body-text center cinema-sub">In an era of disposable shortcuts, permanence is the ultimate luxury. A single vessel crafted to outlast ten thousand refills.</p>
+    </div>
+    <div class="cinema-letterbox bottom" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============================== 7. PRODUCT ATMOSPHERE ============================== -->
+  <section id="atmosphere" class="atmosphere scene-section">
+    <div class="atmosphere-scrim"></div>
+    <div class="atmosphere-inner text-center">
+      <span class="eyebrow center gold">06 — Atmosphere &amp; Ritual</span>
+      <blockquote class="atmosphere-quote">
+        “We didn’t set out to make a water bottle.<br/>
+        We set out to make an object worth keeping.”
+      </blockquote>
+      <cite class="atmosphere-attr">— AURA Design Studio · Copenhagen</cite>
+      <p class="atmosphere-sub">Surrounded by calibrated studio light and floating motes, AURA captures radiance like a lens. Pure borosilicate glass built to outlive fleeting trends.</p>
+    </div>
+  </section>
+
+  <!-- ============================== 8. THE AURA COLLECTION (INTERACTIVE 3D SHOWCASE) ============================== -->
+  <section id="collection" class="collection scene-section">
+    <div class="collection-inner">
+      <div class="collection-intro text-center">
+        <span class="eyebrow center gold">07 — The Collection</span>
+        <h2 class="display-title center">Signature Editions</h2>
+        <p class="body-text center">Six curated glass tones and precision cap treatments, each sharing the identical architectural silhouette. Select a variant to transform the live 3D vessel.</p>
+      </div>
+
+      <!-- Variant Selector Swatch Ribbon -->
+      <div class="collection-swatches" role="tablist" aria-label="AURA Bottle Variants">
+        <button class="variant-pill active" data-variant="original" role="tab" aria-selected="true" id="var-btn-original">
+          <span class="swatch-dot" style="background: #e8edf2; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"></span>
+          <span class="var-name">Original</span>
+        </button>
+        <button class="variant-pill" data-variant="rose" role="tab" aria-selected="false" id="var-btn-rose">
+          <span class="swatch-dot" style="background: #e4a5ad;"></span>
+          <span class="var-name">Rose</span>
+        </button>
+        <button class="variant-pill" data-variant="amber" role="tab" aria-selected="false" id="var-btn-amber">
+          <span class="swatch-dot" style="background: #d99748;"></span>
+          <span class="var-name">Amber</span>
+        </button>
+        <button class="variant-pill" data-variant="midnight" role="tab" aria-selected="false" id="var-btn-midnight">
+          <span class="swatch-dot" style="background: #343642;"></span>
+          <span class="var-name">Midnight</span>
+        </button>
+        <button class="variant-pill" data-variant="pearl" role="tab" aria-selected="false" id="var-btn-pearl">
+          <span class="swatch-dot" style="background: #f0ece3;"></span>
+          <span class="var-name">Pearl</span>
+        </button>
+        <button class="variant-pill" data-variant="emerald" role="tab" aria-selected="false" id="var-btn-emerald">
+          <span class="swatch-dot" style="background: #265442;"></span>
+          <span class="var-name">Emerald</span>
+        </button>
+      </div>
+
+      <!-- Active Variant Detail Showcase -->
+      <div class="collection-stage">
+        <div class="collection-spacer" aria-hidden="true">
+          <div class="live-stage-tag">
+            <span class="live-beacon"></span>
+            <span>Live 3D Vessel · Real-Time Refraction</span>
+          </div>
+        </div>
+
+        <div class="collection-card content-card" id="collection-active-card">
+          <div class="collection-tag-row">
+            <span class="collection-badge" id="col-badge">Signature Edition</span>
+            <span class="collection-price" id="col-price">$68</span>
+          </div>
+          <h3 class="collection-title" id="col-title">AURA Original</h3>
+          <p class="collection-subtitle" id="col-sub">Clear Borosilicate Glass &middot; Obsidian Closure</p>
+          <p class="body-text" id="col-desc">Ultra-pure fire-polished borosilicate crystal paired with a diamond-turned obsidian closure. High optical clarity with zero mineral distortion.</p>
+
+          <div class="collection-notes-box">
+            <span class="notes-label">Craft &amp; Sensory Notes</span>
+            <p class="notes-val" id="col-notes">Crisp Nordic Mineral &middot; Glacier Crisp</p>
+          </div>
+
+          <div class="collection-actions">
+            <button class="btn btn-primary" id="col-order-btn">Acquire This Edition</button>
+            <a href="#shop" class="btn btn-secondary" id="col-config-btn">Custom Volume</a>
+          </div>
+
+          <div class="collection-shipping-note">
+            <span>Complimentary Global Priority Dispatch &middot; 3-5 Business Days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 9. FINAL PRODUCT MONUMENT ============================== -->
+  <section id="monument" class="monument scene-section">
+    <div class="monument-scrim"></div>
+    <div class="monument-content text-center">
+      <span class="eyebrow center gold">08 — Pure Form</span>
+      <h2 class="monument-logo">AURA</h2>
+      <p class="body-text center monument-sub">Borosilicate Glass &middot; Machined Aluminum &middot; Copenhagen</p>
+    </div>
+  </section>
+
+  <!-- ============================== 10. GRAND CINEMATIC CALL TO ACTION ============================== -->
+  <section id="cta-final" class="cta-final scene-section">
+    <div class="cta-final-scrim"></div>
+    <div class="cta-final-inner text-center">
+      <span class="eyebrow center gold">09 — Final Scene</span>
+      <h2 class="cta-final-title">AURA</h2>
+      <p class="cta-final-tagline">Your signature, bottled.</p>
+      <p class="cta-final-sub">A single, hand-finished borosilicate vessel engineered to disappear into daily ritual. Crafted to outlast ten thousand refills.</p>
+      
+      <div class="cta-final-actions">
+        <button class="btn btn-primary btn-cta-grand" id="cta-order-now">
+          <span>ORDER NOW</span>
+        </button>
+        <a href="#collection" class="btn btn-secondary btn-cta-grand" id="cta-explore-col">
+          <span>EXPLORE COLLECTION</span>
+        </a>
+      </div>
+
+      <div class="cta-final-perks">
+        <div class="perk-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+          <span>Complimentary Global Shipping</span>
+        </div>
+        <div class="perk-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+          <span>30-Day Aesthetic Trial</span>
+        </div>
+        <div class="perk-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+          <span>Lifetime Craftsmanship Warranty</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 10. FINAL CTA / COLLECTION CONFIGURATOR ============================== -->
+  <section id="shop" class="shop scene-section">
+    <div class="shop-inner">
+      <div class="shop-media-spacer" aria-hidden="true">
+        <div class="shop-3d-hint">
+          <span class="live-indicator"></span>
+          <span>Live 3D Vessel &middot; Updates with Selection</span>
+        </div>
+      </div>
+
+      <div class="shop-panel content-card">
+        <span class="eyebrow">09 — Acquisition</span>
+        <h2 class="display-title">Acquire AURA</h2>
+        <p class="body-text">A single, hand-finished vessel in borosilicate glass. Select your volume and cap finish below to configure your vessel in real time.</p>
+
+        <div class="shop-price-row">
+          <div class="shop-price" id="shop-price">$68</div>
+          <span class="shop-shipping-tag">Complimentary Global Shipping</span>
+        </div>
+
+        <!-- Volume Selection -->
+        <div class="option-group">
+          <div class="option-header">
+            <span class="option-label">Volume</span>
+            <span class="option-sub-label" id="selected-size-label">500ml · Everyday</span>
+          </div>
+          <div class="option-row" id="size-options" role="radiogroup" aria-label="Bottle Volume">
+            <button class="option-pill active" data-size="500" role="radio" aria-checked="true" id="size-500">
+              <span class="pill-title">500ml</span>
+              <span class="pill-sub">Everyday</span>
+            </button>
+            <button class="option-pill" data-size="750" role="radio" aria-checked="false" id="size-750">
+              <span class="pill-title">750ml</span>
+              <span class="pill-sub">Studio</span>
+            </button>
+            <button class="option-pill" data-size="1000" role="radio" aria-checked="false" id="size-1000">
+              <span class="pill-title">1L</span>
+              <span class="pill-sub">Reserve</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cap Finish Selection -->
+        <div class="option-group">
+          <div class="option-header">
+            <span class="option-label">Cap Finish</span>
+            <span class="option-sub-label" id="selected-finish-label">Onyx · Anodized</span>
+          </div>
+          <div class="option-row swatch-row" id="finish-options" role="radiogroup" aria-label="Cap Finish Swatches">
+            <button class="finish-swatch active" data-finish="onyx" role="radio" aria-checked="true" aria-label="Onyx Finish" id="finish-onyx">
+              <span class="swatch-color" style="background: #18181b;"></span>
+              <span class="swatch-name">Onyx</span>
+            </button>
+            <button class="finish-swatch" data-finish="champagne" role="radio" aria-checked="false" aria-label="Champagne Finish" id="finish-champagne">
+              <span class="swatch-color" style="background: #c9a876;"></span>
+              <span class="swatch-name">Champagne</span>
+            </button>
+            <button class="finish-swatch" data-finish="graphite" role="radio" aria-checked="false" aria-label="Graphite Finish" id="finish-graphite">
+              <span class="swatch-color" style="background: #5a5c63;"></span>
+              <span class="swatch-name">Graphite</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quantity Stepper -->
+        <div class="option-group">
+          <span class="option-label">Quantity</span>
+          <div class="qty-stepper" id="qty-stepper">
+            <button class="qty-btn" id="qty-minus" aria-label="Decrease quantity">–</button>
+            <span class="qty-value" id="qty-value" aria-live="polite">1</span>
+            <button class="qty-btn" id="qty-plus" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        <!-- Add to Bag -->
+        <button class="btn btn-primary btn-add btn-full" id="add-to-cart">
+          <span>Add to Bag</span>
+        </button>
+
+        <div class="shop-guarantees">
+          <div class="guarantee-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+            <span>Complimentary Global Shipping &middot; 3-5 Days</span>
+          </div>
+          <div class="guarantee-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+            <span>30-Day Aesthetic Trial Guarantee</span>
+          </div>
+          <div class="guarantee-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+            <span>Lifetime Craftsmanship Guarantee</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FOOTER ============================== -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-col-brand">
+        <div class="footer-mark">AURA</div>
+        <p class="footer-tagline">Pure form. Refined flow. A hand-finished vessel made to endure.</p>
+        <span class="footer-loc">Design Studio &middot; Copenhagen, Denmark</span>
+      </div>
+
+      <div class="footer-col-form">
+        <span class="footer-col-heading">The Chronicle</span>
+        <p class="footer-col-desc">Receive intimate design journals, limited studio batch drops, and workshop releases.</p>
+        <form class="footer-newsletter" id="newsletter-form">
+          <label class="sr-only" for="newsletter-email">Email address</label>
+          <input id="newsletter-email" type="email" placeholder="Enter your email" required />
+          <button type="submit" class="btn btn-secondary small" id="newsletter-submit">Join</button>
+        </form>
+      </div>
+
+      <div class="footer-col-nav">
+        <span class="footer-col-heading">Navigation</span>
+        <div class="footer-links">
+          <a href="#intro">The Object</a>
+          <a href="#design">Product Design</a>
+          <a href="#materials">Materials &amp; Craft</a>
+          <a href="#story">Copenhagen Origin</a>
+          <a href="#shop">Acquire Vessel</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom-bar">
+      <span>&copy; 2026 AURA Design Studio ApS. Copenhagen. All rights reserved.</span>
+      <span class="footer-legal">High Purity Borosilicate Glass &middot; Turned Aluminum Alloys &middot; Zero Synthetic Polymers</span>
+    </div>
+  </footer>
+
+</main>
+
+<!-- ============================== CART DRAWER ============================== -->
+<div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
+
+<aside class="drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping bag" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Your Bag</h2>
+    <button class="drawer-close" id="cart-close" aria-label="Close bag">&times;</button>
+  </div>
+  <div class="drawer-body" id="cart-body">
+    <p class="cart-empty" id="cart-empty">Your bag is empty.</p>
+    <div class="cart-lines" id="cart-lines"></div>
+  </div>
+  <div class="drawer-foot" id="cart-foot" hidden>
+    <div class="cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cart-subtotal-amt">$0</span>
+    </div>
+    <button class="btn btn-primary btn-full" id="checkout-open">Proceed to Checkout</button>
+  </div>
+</aside>
+
+<!-- ============================== CHECKOUT DRAWER ============================== -->
+<aside class="drawer" id="checkout-drawer" role="dialog" aria-modal="true" aria-label="Checkout" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Checkout</h2>
+    <button class="drawer-close" id="checkout-close" aria-label="Close checkout">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <p class="checkout-demo-note">AURA Studio Demo — no card required. Simulated order dispatch.</p>
+    <form id="checkout-form" class="checkout-form">
+      <label>Full name<input type="text" name="name" required placeholder="Jane Doe" /></label>
+      <label>Email<input type="email" name="email" required placeholder="jane@example.com" /></label>
+      <label>Shipping Address<input type="text" name="address" required placeholder="124 Waterfront Blvd" /></label>
+      <div class="checkout-row">
+        <label>City<input type="text" name="city" required placeholder="Copenhagen" /></label>
+        <label>Postal code<input type="text" name="zip" required placeholder="1050" /></label>
+      </div>
+      <label>Country
+        <select name="country" required>
+          <option value="">Select country</option>
+          <option selected>United States</option>
+          <option>United Kingdom</option>
+          <option>Denmark</option>
+          <option>Germany</option>
+          <option>France</option>
+          <option>Japan</option>
+          <option>Australia</option>
+          <option>Canada</option>
+        </select>
+      </label>
+      <div class="checkout-summary" id="checkout-summary"></div>
+      <button type="submit" class="btn btn-primary btn-full" id="checkout-submit-btn">Complete Reservation</button>
+    </form>
+    <div class="checkout-success" id="checkout-success" hidden>
+      <div class="success-mark">&#10003;</div>
+      <h3>Order confirmed</h3>
+      <p>Reference <strong id="order-number"></strong></p>
+      <p class="checkout-note-soft">Your AURA vessel will be hand-inspected and prepared for dispatch.</p>
+      <button class="btn btn-secondary" id="checkout-done">Continue Browsing</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+<script type="module" src="./main.js"></script>
 </body>
 </html>
