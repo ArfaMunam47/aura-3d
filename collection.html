@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURA Master Collection — 12 Bespoke Crystal Editions</title>
+  <meta name="description" content="Explore the complete 12-edition collection of AURA borosilicate crystal vessels. Hand-finished with machined aerospace billet caps and rare earth mineral oxides." />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="collection-page-body">
+
+<!-- Persistent 3D Canvas Stage -->
+<div id="aura-canvas-container" class="aura-canvas-container" aria-hidden="true"></div>
+
+<!-- Top Navigation -->
+<header id="nav" class="solid">
+  <div class="nav-inner">
+    <a href="/index.html#hero" class="nav-mark" id="nav-logo" aria-label="AURA Home">AURA</a>
+    <nav class="nav-links" id="nav-links" aria-label="Primary">
+      <a href="/index.html#intro" class="nav-link">The Object</a>
+      <a href="/index.html#design" class="nav-link">Design</a>
+      <a href="/index.html#materials" class="nav-link">Materials</a>
+      <a href="/collection.html" class="nav-link active">
+        <span>Collection</span>
+        <span class="nav-edition-badge">12 Editions</span>
+      </a>
+      <a href="/index.html#story" class="nav-link">Story</a>
+      <a href="/index.html#shop" class="nav-link nav-shop-cta">Acquire</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-sound-btn" id="nav-sound-toggle" aria-label="Toggle Audio" title="Toggle Crystal Resonance Audio">
+        <svg id="sound-icon-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <svg id="sound-icon-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button class="nav-bag" id="bag-toggle" aria-haspopup="dialog" aria-controls="cart-drawer" aria-label="Open shopping bag">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="bag-count" id="bag-count" hidden>0</span>
+      </button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation">
+  <a href="/index.html#intro" class="mobile-nav-link">The Object</a>
+  <a href="/index.html#design" class="mobile-nav-link">Design</a>
+  <a href="/index.html#materials" class="mobile-nav-link">Materials</a>
+  <a href="/collection.html" class="mobile-nav-link active">12 Editions Collection</a>
+  <a href="/index.html#story" class="mobile-nav-link">Story</a>
+  <a href="/index.html#shop" class="mobile-nav-link">Acquire Collection</a>
+</div>
+
+<main id="collection-main">
+  <!-- Page Header -->
+  <section class="col-page-header">
+    <span class="eyebrow gold">ATELIER COPENHAGEN · MASTER ARCHIVE</span>
+    <h1 class="col-page-title">The 12 Master Editions</h1>
+    <p class="col-page-subtitle">
+      Twelve individual silhouettes in flame-polished borosilicate glass, rare earth mineral oxides, and volcanic quartz. Every bottle carries the bold AURA wordmark kiln-fused into the vessel wall. Click any edition below to inspect it in live 3D.
+    </p>
+
+    <!-- Filter Bar -->
+    <div class="gallery-filter-bar" role="tablist" aria-label="Filter Collection Editions">
+      <button class="gallery-filter-btn active" data-filter="all" role="tab" aria-selected="true">All 12 Editions</button>
+      <button class="gallery-filter-btn" data-filter="crystal" role="tab" aria-selected="false">Optic Crystal (4)</button>
+      <button class="gallery-filter-btn" data-filter="mineral" role="tab" aria-selected="false">Mineral Reserve (5)</button>
+      <button class="gallery-filter-btn" data-filter="smoked" role="tab" aria-selected="false">Smoked &amp; Noir (3)</button>
+    </div>
+  </section>
+
+  <!-- Live 3D Preview Sticky Banner -->
+  <div class="col-live-studio-banner">
+    <div class="col-active-preview-info">
+      <div class="col-active-dot" id="col-live-dot" style="background: #d9822b; color: #d9822b;"></div>
+      <div class="col-active-details">
+        <span class="col-active-edition-name" id="col-live-name">AURA Cognac Nectar</span>
+        <span class="col-active-edition-sub" id="col-live-sub">Live 3D Studio Stage · Real-time Optical Refraction</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn btn-secondary btn-sm" id="col-turntable-toggle" style="font-size: 0.8rem; padding: 8px 14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span id="col-turntable-text">360° Turntable</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="col-live-order-btn" style="font-size: 0.8rem; padding: 8px 16px;">Acquire Edition</button>
+    </div>
+  </div>
+
+  <!-- 12-Card Dynamic Grid Section -->
+  <section class="col-grid-section">
+    <div class="col-card-grid" id="collection-page-grid">
+      <!-- Populated dynamically via collection.js -->
+    </div>
+  </section>
+
+  <!-- Master Specifications Matrix -->
+  <section class="specs-matrix-section">
+    <div class="section-head text-center" style="margin-bottom: var(--space-3);">
+      <span class="eyebrow center">TECHNICAL ARCHIVE</span>
+      <h2 class="display-title center" style="font-size: clamp(2rem, 3.6vw, 2.8rem);">Master Composition Matrix</h2>
+      <p class="body-text center">Detailed chemical, optical, and mechanical specifications across all 12 AURA editions.</p>
+    </div>
+
+    <div class="specs-matrix-table-wrap">
+      <table class="specs-matrix-table">
+        <thead>
+          <tr>
+            <th>Edition</th>
+            <th>Glass Matrix</th>
+            <th>Mineral Pigment</th>
+            <th>Closure Billet</th>
+            <th>Refractive Index</th>
+            <th>Tare Weight</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody id="specs-matrix-body">
+          <!-- Filled via JS -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer id="footer" style="position: relative; z-index: 5; background: #0b0b0e; border-top: 1px solid var(--c-line-soft); padding: var(--space-5) var(--space-3) var(--space-3);">
+  <div style="max-width: var(--max-w); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+    <div>
+      <span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; letter-spacing: 0.28em; color: var(--c-ivory);">AURA</span>
+      <p style="font-size: 0.88rem; color: var(--c-muted); margin-top: 6px;">Refined Hydration Vessels · Copenhagen Atelier</p>
+    </div>
+    <div style="display: flex; gap: var(--space-3); font-size: 0.86rem; color: var(--c-ivory-dim);">
+      <a href="/index.html#hero">Home</a>
+      <a href="/index.html#materials">Materials</a>
+      <a href="/collection.html">Collection</a>
+      <a href="/index.html#shop">Acquire</a>
+    </div>
+  </div>
+  <div style="max-width: var(--max-w); margin: var(--space-3) auto 0; padding-top: var(--space-2); border-top: 1px solid var(--c-line-soft); font-size: 0.76rem; color: var(--c-faint); display: flex; justify-content: space-between; flex-wrap: wrap;">
+    <span>&copy; 2026 AURA Design Studio ApS. All rights reserved.</span>
+    <span>Ultra-pure Borosilicate Glass · Zero Synthetic Polymers</span>
+  </div>
+</footer>
+
+<!-- Cart Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
+<aside class="drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping bag" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Your Bag</h2>
+    <button class="drawer-close" id="cart-close" aria-label="Close bag">&times;</button>
+  </div>
+  <div class="drawer-body" id="cart-body">
+    <p class="cart-empty" id="cart-empty">Your bag is empty.</p>
+    <div class="cart-lines" id="cart-lines"></div>
+  </div>
+  <div class="drawer-foot" id="cart-foot" hidden></div>
+</aside>
+
+<!-- Checkout Drawer -->
+<aside class="drawer" id="checkout-drawer" role="dialog" aria-modal="true" aria-label="Checkout" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Checkout</h2>
+    <button class="drawer-close" id="checkout-close" aria-label="Close checkout">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <p class="checkout-demo-note">AURA Studio Demo — no card required. Simulated order dispatch.</p>
+    <form id="checkout-form" class="checkout-form">
+      <label>Full name<input type="text" name="name" required placeholder="Jane Doe" /></label>
+      <label>Email<input type="email" name="email" required placeholder="jane@example.com" /></label>
+      <label>Shipping Address<input type="text" name="address" required placeholder="124 Waterfront Blvd" /></label>
+      <div class="checkout-row">
+        <label>City<input type="text" name="city" required placeholder="Copenhagen" /></label>
+        <label>Postal code<input type="text" name="zip" required placeholder="1050" /></label>
+      </div>
+      <label>Country
+        <select name="country" required>
+          <option selected>United States</option>
+          <option>United Kingdom</option>
+          <option>Denmark</option>
+          <option>Germany</option>
+          <option>France</option>
+          <option>Japan</option>
+          <option>Australia</option>
+          <option>Canada</option>
+        </select>
+      </label>
+      <div class="checkout-summary" id="checkout-summary"></div>
+      <button type="submit" class="btn btn-primary btn-full" id="checkout-submit-btn">Complete Reservation</button>
+    </form>
+    <div class="checkout-success" id="checkout-success" hidden>
+      <div class="success-mark">&#10003;</div>
+      <h3>Order confirmed</h3>
+      <p>Reference <strong id="order-number"></strong></p>
+      <p class="checkout-note-soft">Your AURA vessel will be hand-inspected and prepared for dispatch.</p>
+      <button class="btn btn-secondary" id="checkout-done">Continue Browsing</button>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Scripts -->
+<script type="module" src="./collection.js"></script>
+</body>
+</html>

@@ -75,11 +75,22 @@
       <a href="#intro" class="nav-link" data-section="intro">The Object</a>
       <a href="#design" class="nav-link" data-section="design">Design</a>
       <a href="#materials" class="nav-link" data-section="materials">Materials</a>
-      <a href="#collection" class="nav-link" data-section="collection">Collection</a>
+      <a href="/collection.html" class="nav-link nav-collection-trigger" id="nav-collection-btn">
+        <span>Collection</span>
+        <span class="nav-edition-badge">12 Editions</span>
+      </a>
       <a href="#story" class="nav-link" data-section="story">Story</a>
       <a href="#shop" class="nav-link nav-shop-cta" data-section="shop">Acquire</a>
     </nav>
     <div class="nav-actions">
+      <button class="nav-director-btn" id="nav-director-toggle" aria-label="Open Camera & Sound Director" title="Cinema Camera & Lighting Director">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="nav-director-text">Director</span>
+      </button>
+      <button class="nav-sound-btn" id="nav-sound-toggle" aria-label="Toggle Crystal Resonance Audio" title="Toggle Crystal Resonance Audio">
+        <svg id="sound-icon-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <svg id="sound-icon-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
       <button class="nav-bag" id="bag-toggle" aria-haspopup="dialog" aria-controls="cart-drawer" aria-label="Open shopping bag">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
         <span class="bag-count" id="bag-count" hidden>0</span>
@@ -96,6 +107,7 @@
   <a href="#intro" class="mobile-nav-link">The Object</a>
   <a href="#design" class="mobile-nav-link">Design</a>
   <a href="#materials" class="mobile-nav-link">Materials</a>
+  <a href="/collection.html" class="mobile-nav-link">12 Master Editions</a>
   <a href="#story" class="mobile-nav-link">Story</a>
   <a href="#shop" class="mobile-nav-link">Acquire Collection</a>
 </div>
@@ -111,6 +123,7 @@
       <p class="hero-sub">A single, hand-finished vessel in borosilicate glass and machined aluminum. Designed to bring serenity to daily ritual.</p>
       <div class="hero-ctas">
         <a href="#shop" class="btn btn-primary" id="hero-cta-shop">Acquire AURA</a>
+        <a href="/collection.html" class="btn btn-secondary" id="hero-cta-collection">12 Master Editions</a>
         <a href="#design" class="btn btn-secondary" id="hero-cta-design">Design Story</a>
       </div>
     </div>
@@ -304,36 +317,78 @@
   <section id="collection" class="collection scene-section">
     <div class="collection-inner">
       <div class="collection-intro text-center">
-        <span class="eyebrow center gold">07 — The Collection</span>
-        <h2 class="display-title center">Signature Editions</h2>
-        <p class="body-text center">Six curated glass tones and precision cap treatments, each sharing the identical architectural silhouette. Select a variant to transform the live 3D vessel.</p>
+        <span class="eyebrow center gold">07 — The Master Collection</span>
+        <h2 class="display-title center">12 Unique Editions</h2>
+        <p class="body-text center">Twelve distinct expressions in flame-polished borosilicate crystal, rare earth mineral oxides, and volcanic quartz. Every bottle carries the monumental AURA signature fused into glass.</p>
+        <div class="collection-gallery-cta-row">
+          <button class="btn btn-primary btn-gallery-trigger" id="btn-open-gallery-stage">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Launch 12-Bottle Atelier Gallery</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Variant Selector Swatch Ribbon -->
-      <div class="collection-swatches" role="tablist" aria-label="AURA Bottle Variants">
-        <button class="variant-pill active" data-variant="original" role="tab" aria-selected="true" id="var-btn-original">
-          <span class="swatch-dot" style="background: #e8edf2; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);"></span>
-          <span class="var-name">Original</span>
+      <!-- 12-Variant Swatch Ribbon -->
+      <div class="collection-swatches" id="collection-swatches" role="tablist" aria-label="12 AURA Bottle Editions">
+        <button class="variant-pill active" data-variant="crystal" role="tab" aria-selected="true" id="var-btn-crystal">
+          <span class="swatch-num">01</span>
+          <span class="swatch-dot" style="background: #e8edf2; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);"></span>
+          <span class="var-name">Crystal</span>
         </button>
-        <button class="variant-pill" data-variant="rose" role="tab" aria-selected="false" id="var-btn-rose">
-          <span class="swatch-dot" style="background: #e4a5ad;"></span>
-          <span class="var-name">Rose</span>
+        <button class="variant-pill" data-variant="obsidian" role="tab" aria-selected="false" id="var-btn-obsidian">
+          <span class="swatch-num">02</span>
+          <span class="swatch-dot" style="background: #2b2d38;"></span>
+          <span class="var-name">Obsidian</span>
         </button>
         <button class="variant-pill" data-variant="amber" role="tab" aria-selected="false" id="var-btn-amber">
+          <span class="swatch-num">03</span>
           <span class="swatch-dot" style="background: #d99748;"></span>
           <span class="var-name">Amber</span>
         </button>
-        <button class="variant-pill" data-variant="midnight" role="tab" aria-selected="false" id="var-btn-midnight">
-          <span class="swatch-dot" style="background: #343642;"></span>
-          <span class="var-name">Midnight</span>
-        </button>
-        <button class="variant-pill" data-variant="pearl" role="tab" aria-selected="false" id="var-btn-pearl">
-          <span class="swatch-dot" style="background: #f0ece3;"></span>
-          <span class="var-name">Pearl</span>
+        <button class="variant-pill" data-variant="rose" role="tab" aria-selected="false" id="var-btn-rose">
+          <span class="swatch-num">04</span>
+          <span class="swatch-dot" style="background: #e4a5ad;"></span>
+          <span class="var-name">Rose</span>
         </button>
         <button class="variant-pill" data-variant="emerald" role="tab" aria-selected="false" id="var-btn-emerald">
+          <span class="swatch-num">05</span>
           <span class="swatch-dot" style="background: #265442;"></span>
           <span class="var-name">Emerald</span>
+        </button>
+        <button class="variant-pill" data-variant="opaline" role="tab" aria-selected="false" id="var-btn-opaline">
+          <span class="swatch-num">06</span>
+          <span class="swatch-dot" style="background: #f0ece3;"></span>
+          <span class="var-name">Opaline</span>
+        </button>
+        <button class="variant-pill" data-variant="cobalt" role="tab" aria-selected="false" id="var-btn-cobalt">
+          <span class="swatch-num">07</span>
+          <span class="swatch-dot" style="background: #1e385c;"></span>
+          <span class="var-name">Cobalt</span>
+        </button>
+        <button class="variant-pill" data-variant="champagne" role="tab" aria-selected="false" id="var-btn-champagne">
+          <span class="swatch-num">08</span>
+          <span class="swatch-dot" style="background: #ebd9b7;"></span>
+          <span class="var-name">Champagne</span>
+        </button>
+        <button class="variant-pill" data-variant="terracotta" role="tab" aria-selected="false" id="var-btn-terracotta">
+          <span class="swatch-num">09</span>
+          <span class="swatch-dot" style="background: #b8623b;"></span>
+          <span class="var-name">Terracotta</span>
+        </button>
+        <button class="variant-pill" data-variant="amethyst" role="tab" aria-selected="false" id="var-btn-amethyst">
+          <span class="swatch-num">10</span>
+          <span class="swatch-dot" style="background: #5e4368;"></span>
+          <span class="var-name">Amethyst</span>
+        </button>
+        <button class="variant-pill" data-variant="glacier" role="tab" aria-selected="false" id="var-btn-glacier">
+          <span class="swatch-num">11</span>
+          <span class="swatch-dot" style="background: #b2dce6;"></span>
+          <span class="var-name">Glacier</span>
+        </button>
+        <button class="variant-pill" data-variant="noir" role="tab" aria-selected="false" id="var-btn-noir">
+          <span class="swatch-num">12</span>
+          <span class="swatch-dot" style="background: #141416;"></span>
+          <span class="var-name">Noir</span>
         </button>
       </div>
 
@@ -342,27 +397,28 @@
         <div class="collection-spacer" aria-hidden="true">
           <div class="live-stage-tag">
             <span class="live-beacon"></span>
-            <span>Live 3D Vessel · Real-Time Refraction</span>
+            <span>Live 3D Vessel · Real-Time Optical Refraction</span>
           </div>
         </div>
 
         <div class="collection-card content-card" id="collection-active-card">
           <div class="collection-tag-row">
+            <span class="collection-num-tag" id="col-number">EDITION N° 01</span>
             <span class="collection-badge" id="col-badge">Signature Edition</span>
             <span class="collection-price" id="col-price">$68</span>
           </div>
-          <h3 class="collection-title" id="col-title">AURA Original</h3>
-          <p class="collection-subtitle" id="col-sub">Clear Borosilicate Glass &middot; Obsidian Closure</p>
-          <p class="body-text" id="col-desc">Ultra-pure fire-polished borosilicate crystal paired with a diamond-turned obsidian closure. High optical clarity with zero mineral distortion.</p>
+          <h3 class="collection-title" id="col-title">AURA Pure Crystal</h3>
+          <p class="collection-subtitle" id="col-sub">Clear Borosilicate · Optic Platinum</p>
+          <p class="body-text" id="col-desc">Ultra-pure fire-polished borosilicate crystal paired with a diamond-turned obsidian closure. High optical clarity with zero mineral distortion and kiln-fired platinum enamel silkscreen.</p>
 
           <div class="collection-notes-box">
             <span class="notes-label">Craft &amp; Sensory Notes</span>
-            <p class="notes-val" id="col-notes">Crisp Nordic Mineral &middot; Glacier Crisp</p>
+            <p class="notes-val" id="col-notes">Glacial Mineral · Optic Purity · Zero Distortion</p>
           </div>
 
           <div class="collection-actions">
             <button class="btn btn-primary" id="col-order-btn">Acquire This Edition</button>
-            <a href="#shop" class="btn btn-secondary" id="col-config-btn">Custom Volume</a>
+            <button class="btn btn-secondary btn-inspect-3d-macro" id="col-inspect-label-btn">Macro AURA Label</button>
           </div>
 
           <div class="collection-shipping-note">
@@ -511,6 +567,13 @@
             <span>Lifetime Craftsmanship Guarantee</span>
           </div>
         </div>
+
+        <!-- Link to dedicated 12 Master Editions page -->
+        <div class="shop-collection-banner" style="margin-top: var(--space-3); padding: var(--space-2); background: rgba(229,195,141,0.08); border: 1px solid rgba(229,195,141,0.25); border-radius: var(--radius-s); text-align: center;">
+          <span style="font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-champagne); font-weight: 700;">Looking for Special Editions?</span>
+          <p style="font-size: 0.90rem; color: var(--c-ivory-dim); margin: 6px 0 12px; line-height: 1.5;">Explore all 12 individually styled glass silhouettes, rare mineral pigments, and live 3D optical refraction on our dedicated page.</p>
+          <a href="/collection.html" class="btn btn-secondary small btn-full">Explore The 12 Master Editions &rarr;</a>
+        </div>
       </div>
     </div>
   </section>
@@ -540,6 +603,7 @@
           <a href="#intro">The Object</a>
           <a href="#design">Product Design</a>
           <a href="#materials">Materials &amp; Craft</a>
+          <a href="/collection.html">12 Master Editions</a>
           <a href="#story">Copenhagen Origin</a>
           <a href="#shop">Acquire Vessel</a>
         </div>
@@ -615,6 +679,78 @@
     </div>
   </div>
 </aside>
+
+<!-- ============================== 12-BOTTLE ATELIER GALLERY MODAL ============================== -->
+<div class="gallery-backdrop" id="gallery-backdrop" aria-hidden="true"></div>
+<div class="atelier-gallery" id="atelier-gallery" role="dialog" aria-modal="true" aria-label="12-Bottle Master Collection Gallery" aria-hidden="true">
+  <div class="gallery-container">
+    <div class="gallery-header">
+      <div class="gallery-header-left">
+        <span class="gallery-eyebrow">AURA MASTER ATELIER · COPENHAGEN</span>
+        <h2 class="gallery-headline">The 12 Master Editions</h2>
+        <p class="gallery-lead">Twelve bespoke glass silhouettes in pure borosilicate crystal, smoked quartz, and rare mineral oxides. Every vessel carries the monumental AURA signature kiln-fused into the glass wall.</p>
+      </div>
+      <div class="gallery-header-actions">
+        <button class="btn btn-secondary btn-turntable-toggle" id="gallery-turntable-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="gallery-turntable-text">360° Turntable</span>
+        </button>
+        <button class="gallery-close-btn" id="gallery-close-btn" aria-label="Close Gallery">&times;</button>
+      </div>
+    </div>
+
+    <!-- Gallery Category Filter Tabs -->
+    <div class="gallery-filter-bar" role="tablist" aria-label="Filter Collection Editions">
+      <button class="gallery-filter-btn active" data-filter="all" role="tab" aria-selected="true">All 12 Editions</button>
+      <button class="gallery-filter-btn" data-filter="crystal" role="tab" aria-selected="false">Optic Crystal (4)</button>
+      <button class="gallery-filter-btn" data-filter="mineral" role="tab" aria-selected="false">Mineral Reserve (5)</button>
+      <button class="gallery-filter-btn" data-filter="smoked" role="tab" aria-selected="false">Smoked &amp; Noir (3)</button>
+    </div>
+
+    <!-- 12-Card Grid -->
+    <div class="gallery-grid" id="gallery-grid">
+      <!-- Generated dynamically in main.js with luxury interactive markup -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================== CINEMA DIRECTOR HUD ============================== -->
+<div class="director-hud" id="director-hud" aria-hidden="true">
+  <div class="director-hud-inner">
+    <div class="director-hud-title">
+      <div class="director-rec-indicator">
+        <span class="director-rec-dot"></span>
+        <span class="director-title-text">AURA Cinema Director</span>
+      </div>
+      <button class="director-close" id="director-close-btn" aria-label="Close Director">&times;</button>
+    </div>
+
+    <div class="director-group">
+      <span class="director-label">Camera Angle</span>
+      <div class="director-btn-group" id="camera-angle-group">
+        <button class="director-opt-btn active" data-cam="default">Stage</button>
+        <button class="director-opt-btn" data-cam="label">AURA Mark</button>
+        <button class="director-opt-btn" data-cam="cap">Cap &amp; Knurl</button>
+        <button class="director-opt-btn" data-cam="base">Crystal Punt</button>
+        <button class="director-opt-btn" data-cam="orbit">360 Orbit</button>
+      </div>
+    </div>
+
+    <div class="director-group">
+      <span class="director-label">Lighting Ambience</span>
+      <div class="director-btn-group" id="lighting-mood-group">
+        <button class="director-opt-btn active" data-light="studio">Nordic Studio</button>
+        <button class="director-opt-btn" data-light="midnight">Midnight Cinema</button>
+        <button class="director-opt-btn" data-light="golden">Golden Caustics</button>
+      </div>
+    </div>
+
+    <div class="director-footer-row">
+      <button class="btn btn-secondary btn-sm" id="director-open-gallery-btn">View 12 Editions</button>
+      <button class="btn btn-secondary btn-sm" id="director-toggle-audio-btn">Sound: <span id="director-audio-status">OFF</span></button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast Notification -->
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>

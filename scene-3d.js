@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { PRODUCT, findVariant } from './product-data.js';
 
 /**
@@ -6,21 +9,25 @@ import { PRODUCT, findVariant } from './product-data.js';
  *
  * Core Principles:
  * 1. Physical Luxury Realism:
- *    - Authentic borosilicate crystal with solid weighted punt base (no flat/milky white plastic).
- *    - Real refractive glass with internal reflections, caustic depth, and crystal-clear brilliance.
+ *    - Authentic flame-polished borosilicate crystal with solid weighted punt base.
+ *    - Rich, non-whitish glass attenuation (Baltic Cognac Quartz, Smoked Obsidian, Nordic Emerald).
  *    - Precision-machined aluminum closure with diamond knurling, chamfers, and engraved top monogram.
- *    - Silkscreened mineral enamel typography physically fused onto glass surface with tactile bump relief.
- * 2. Unbroken Product Identity:
- *    - EXACT same signature bottle geometry across Hero, Intro, Design, Materials, Story, Collection, and Final CTA.
- *    - Variants only modify real physical material attributes (glass tint, liquid tone, cap anodizing).
- * 3. Stable, Grounded Cinematic Camera:
- *    - Kept at comfortable luxury distance (FOV ~32, Z ~6.4) so the full bottle is completely visible.
- *    - Subtle living breath (slow majestic rotation, ambient specular light drift, floating motes).
+ *    - High-contrast, ultra-bold silkscreened enamel typography physically fused onto glass surface.
+ * 2. Subtle Depth-of-Field (DOF) Camera Controller:
+ *    - Dynamic lens bokeh blurs background dust, halo, and atmosphere as user scrolls.
+ *    - Focus locked tack-sharp on the AURA bottle to emulate high-end cine product photography.
+ * 3. Autonomous Living Bottle:
+ *    - Multi-harmonic organic floating and gentle breath (no irritating manual dragging required).
+ *    - Inertial fluid slosh simulation in liquid core responding to scroll and motion.
+ *    - Sweeping studio caustics and specular highlights across glass and cap.
  */
 
 let renderer = null;
 let scene = null;
 let camera = null;
+let composer = null;
+let bokehPass = null;
+
 let bottleGroup = null;
 let glassMesh = null;
 let liquidMesh = null;
@@ -54,30 +61,30 @@ let animationFrameId = null;
 const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 const windowHalf = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-// Current Variant & Transition State
-let activeVariantId = 'original';
+// Current Variant & Transition State (Default: Signature Amber Cognac Quartz — Rich & Warm, NOT Whitish)
+let activeVariantId = 'amber';
 const currentVariantProps = {
-  glassColor: new THREE.Color(0xffffff),
-  attenuationColor: new THREE.Color(0xe0f2fe),
-  attenuationDistance: 4.2,
-  liquidColor: new THREE.Color(0xedf7fc),
-  liquidOpacity: 0.55,
-  capColor: new THREE.Color(0x383a42),
-  capMetalness: 0.92,
-  capRoughness: 0.24,
-  haloColor: new THREE.Color(0xc9a876),
+  glassColor: new THREE.Color(0xffeedd),
+  attenuationColor: new THREE.Color(0xd97724),
+  attenuationDistance: 2.6,
+  liquidColor: new THREE.Color(0x9e5210),
+  liquidOpacity: 0.72,
+  capColor: new THREE.Color(0xd4a359),
+  capMetalness: 0.94,
+  capRoughness: 0.20,
+  haloColor: new THREE.Color(0xe89938),
 };
 
 const targetVariantProps = {
-  glassColor: new THREE.Color(0xffffff),
-  attenuationColor: new THREE.Color(0xe0f2fe),
-  attenuationDistance: 4.2,
-  liquidColor: new THREE.Color(0xedf7fc),
-  liquidOpacity: 0.55,
-  capColor: new THREE.Color(0x383a42),
-  capMetalness: 0.92,
-  capRoughness: 0.24,
-  haloColor: new THREE.Color(0xc9a876),
+  glassColor: new THREE.Color(0xffeedd),
+  attenuationColor: new THREE.Color(0xd97724),
+  attenuationDistance: 2.6,
+  liquidColor: new THREE.Color(0x9e5210),
+  liquidOpacity: 0.72,
+  capColor: new THREE.Color(0xd4a359),
+  capMetalness: 0.94,
+  capRoughness: 0.20,
+  haloColor: new THREE.Color(0xe89938),
 };
 
 // Size scale
@@ -90,9 +97,10 @@ let craftFocusRotation = new THREE.Euler(0, 0, 0);
 let targetCraftOffset = new THREE.Vector3(0, 0, 0);
 let targetCraftRot = new THREE.Euler(0, 0, 0);
 
-// Scroll tracking
+// Scroll tracking & velocity for dynamic DOF
 let scrollProgress = 0;
 let targetScrollProgress = 0;
+let lastScrollProgress = 0;
 
 // ---------------------------------------------------------------------------
 // Procedural Textures (Knurling, Embossed Top Monogram, Silkscreen Typography)
@@ -177,116 +185,239 @@ function createCapTopTexture() {
   return texture;
 }
 
-function createSilkscreenedLabelTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 2048;
-  canvas.height = 2048;
-  const ctx = canvas.getContext('2d');
+// Dynamic high-definition silkscreen canvas for AURA branding
+let labelCanvas = null;
+let labelCtx = null;
+let labelBumpCanvas = null;
+let labelBumpCtx = null;
+let labelTexture = null;
+let labelBumpTexture = null;
 
+function drawTrackedText(ctx, text, x, y, letterSpacingPx) {
+  const chars = text.split('');
+  let totalWidth = 0;
+  const widths = chars.map((c) => {
+    const w = ctx.measureText(c).width;
+    totalWidth += w + letterSpacingPx;
+    return w;
+  });
+  totalWidth -= letterSpacingPx;
+
+  let currentX = x - totalWidth / 2;
+  for (let i = 0; i < chars.length; i++) {
+    ctx.fillText(chars[i], currentX + widths[i] / 2, y);
+    currentX += widths[i] + letterSpacingPx;
+  }
+}
+
+function renderSilkscreenCanvas(variant) {
+  if (!labelCanvas) {
+    labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 2048;
+    labelCanvas.height = 2048;
+    labelCtx = labelCanvas.getContext('2d');
+  }
+  const ctx = labelCtx;
   ctx.clearRect(0, 0, 2048, 2048);
+
+  const foilColor = (variant && variant.foilColor) || '#ffffff';
+  const foilAccent = (variant && variant.foilAccent) || '#d4a359';
+  const editionNum = (variant && variant.number) || '01';
+  const editionName = (variant && variant.name ? variant.name.replace(/^\d+\.\s*AURA\s*/i, '') : 'COGNAC NECTAR').toUpperCase();
+
+  // Cylindrical aspect ratio compensation
+  ctx.save();
+  ctx.translate(1024, 0);
+  ctx.scale(0.74, 1.0);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Crisp mineral enamel ink (warm off-white with micro-translucency)
-  ctx.fillStyle = '#f8f4ec';
+  // 1. Monumental Wordmark "A U R A" in BOLD, HIGH-CONTRAST VISIBILITY
+  // Deep contrast background shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 8;
 
-  // 1. Primary Wordmark "A U R A"
-  ctx.font = '500 144px "Cormorant Garamond", Georgia, serif';
-  ctx.letterSpacing = '0.40em';
-  ctx.fillText('A U R A', 1024, 880);
+  // Ultra-bold high-impact typography
+  ctx.font = '900 184px "Inter", "Cormorant Garamond", Georgia, sans-serif';
 
-  // 2. Sub-mark: BOROSILICATE GLASS
-  ctx.font = '500 28px "Inter", -apple-system, sans-serif';
-  ctx.letterSpacing = '0.44em';
-  ctx.fillStyle = 'rgba(248, 244, 236, 0.92)';
-  ctx.fillText('BOROSILICATE GLASS', 1024, 980);
+  // High-contrast deep outline to ensure letters pop over any liquid tint or background
+  ctx.strokeStyle = 'rgba(10, 10, 14, 0.92)';
+  ctx.lineWidth = 14;
+  ctx.lineJoin = 'round';
+  const letters = ['A', 'U', 'R', 'A'];
+  const offsets = [-245, -82, 82, 245];
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeText(letters[i], offsets[i], 835);
+  }
 
-  // 3. Fine Hairline Divider with Center Diamond
-  ctx.strokeStyle = 'rgba(201, 168, 118, 0.85)';
-  ctx.lineWidth = 2.0;
+  // Brilliant metallic multi-stop gold/platinum foil gradient fill
+  const textGrad = ctx.createLinearGradient(-320, 780, 320, 880);
+  textGrad.addColorStop(0, '#ffffff');
+  textGrad.addColorStop(0.35, foilColor);
+  textGrad.addColorStop(0.7, '#ffffff');
+  textGrad.addColorStop(1, foilAccent);
+  ctx.fillStyle = textGrad;
+
+  for (let i = 0; i < 4; i++) {
+    ctx.fillText(letters[i], offsets[i], 835);
+  }
+
+  // Crisp fine specular metallic perimeter pass
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.lineWidth = 2.2;
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeText(letters[i], offsets[i], 835);
+  }
+  ctx.restore();
+
+  // 2. Sub-mark: BOROSILICATE GLASS · FLAME POLISHED (Bold & Legible)
+  ctx.font = '700 25px "Inter", -apple-system, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.98;
+  drawTrackedText(ctx, 'BOROSILICATE GLASS · FLAME POLISHED', 0, 932, 11);
+
+  // 3. Fine Hairline Divider with Center Diamond Accent
+  ctx.strokeStyle = foilAccent;
+  ctx.lineWidth = 2.4;
+  ctx.globalAlpha = 0.95;
   ctx.beginPath();
-  ctx.moveTo(820, 1030);
-  ctx.lineTo(1000, 1030);
-  ctx.moveTo(1048, 1030);
-  ctx.lineTo(1228, 1030);
+  ctx.moveTo(-235, 972);
+  ctx.lineTo(-44, 972);
+  ctx.moveTo(44, 972);
+  ctx.lineTo(235, 972);
   ctx.stroke();
 
-  // Center diamond accent
-  ctx.fillStyle = 'rgba(201, 168, 118, 0.95)';
+  // Center diamond emblem
+  ctx.fillStyle = foilAccent;
   ctx.beginPath();
-  ctx.moveTo(1024, 1023);
-  ctx.lineTo(1031, 1030);
-  ctx.lineTo(1024, 1037);
-  ctx.lineTo(1017, 1030);
+  ctx.moveTo(0, 962);
+  ctx.lineTo(10, 972);
+  ctx.lineTo(0, 982);
+  ctx.lineTo(-10, 972);
   ctx.closePath();
   ctx.fill();
 
-  // 4. Batch & Origin Markings
-  ctx.font = '400 24px "Inter", -apple-system, sans-serif';
-  ctx.letterSpacing = '0.34em';
-  ctx.fillStyle = 'rgba(248, 244, 236, 0.82)';
-  ctx.fillText('500 ML · COPENHAGEN', 1024, 1085);
+  // 4. Bespoke Edition Number & Name (High Contrast)
+  ctx.font = '700 23px "Inter", -apple-system, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.96;
+  drawTrackedText(ctx, `EDITION N° ${editionNum} · ${editionName}`, 0, 1018, 8);
 
-  ctx.font = '400 20px "Inter", -apple-system, sans-serif';
-  ctx.letterSpacing = '0.28em';
-  ctx.fillStyle = 'rgba(201, 168, 118, 0.75)';
-  ctx.fillText('FLAME POLISHED · BATCH 04', 1024, 1135);
+  // 5. Origin & Volume Specification
+  ctx.font = '600 19px "Inter", -apple-system, sans-serif';
+  ctx.fillStyle = foilAccent;
+  ctx.globalAlpha = 0.92;
+  drawTrackedText(ctx, 'COPENHAGEN DESIGN STUDIO · 500 ML', 0, 1060, 7);
 
-  // 5. Minimalist Volumetric Calibration Marks on Side
+  ctx.restore();
+
+  // 6. Volumetric Fluid Calibration Lines on Flank (right side)
+  ctx.save();
   ctx.textAlign = 'left';
-  ctx.font = '400 17px "Inter", -apple-system, sans-serif';
-  ctx.letterSpacing = '0.22em';
-  ctx.fillStyle = 'rgba(248, 244, 236, 0.65)';
-  ctx.strokeStyle = 'rgba(248, 244, 236, 0.55)';
-  ctx.lineWidth = 1.8;
+  ctx.textBaseline = 'middle';
+  ctx.font = '600 19px "Inter", -apple-system, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = foilAccent;
+  ctx.lineWidth = 2.0;
 
   const graduations = [
-    { y: 720, label: '500 ML' },
-    { y: 840, label: '400 ML' },
-    { y: 960, label: '300 ML' },
-    { y: 1080, label: '200 ML' },
-    { y: 1200, label: '100 ML' },
+    { y: 700, label: '500 ML' },
+    { y: 820, label: '400 ML' },
+    { y: 940, label: '300 ML' },
+    { y: 1060, label: '200 ML' },
+    { y: 1180, label: '100 ML' },
   ];
 
   for (const g of graduations) {
+    ctx.globalAlpha = 0.75;
     ctx.beginPath();
     ctx.moveTo(1580, g.y);
     ctx.lineTo(1615, g.y);
     ctx.stroke();
+
+    ctx.globalAlpha = 0.92;
     ctx.fillText(g.label, 1628, g.y);
   }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.anisotropy = 16;
-  texture.generateMipmaps = true;
-  return texture;
+  ctx.restore();
 }
 
-function createSilkscreenBumpMap() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
-
+function renderSilkscreenBumpCanvas(variant) {
+  if (!labelBumpCanvas) {
+    labelBumpCanvas = document.createElement('canvas');
+    labelBumpCanvas.width = 1024;
+    labelBumpCanvas.height = 1024;
+    labelBumpCtx = labelBumpCanvas.getContext('2d');
+  }
+  const ctx = labelBumpCtx;
   ctx.fillStyle = '#808080';
   ctx.fillRect(0, 0, 1024, 1024);
 
-  // Raised ink relief for physical grazing light reflection
+  // Raised tactile relief for grazing light specular catch
+  ctx.save();
+  ctx.translate(512, 0);
+  ctx.scale(0.74, 1.0);
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffffff';
 
-  ctx.font = '500 72px "Cormorant Garamond", Georgia, serif';
-  ctx.letterSpacing = '0.40em';
-  ctx.fillText('A U R A', 512, 440);
+  ctx.font = '600 78px "Cormorant Garamond", Georgia, serif';
+  const letters = ['A', 'U', 'R', 'A'];
+  const offsets = [-122, -41, 41, 122];
+  for (let i = 0; i < 4; i++) {
+    ctx.fillText(letters[i], offsets[i], 418);
+  }
 
-  ctx.font = '500 14px "Inter", -apple-system, sans-serif';
-  ctx.letterSpacing = '0.44em';
-  ctx.fillText('BOROSILICATE GLASS', 512, 490);
+  ctx.font = '500 12px "Inter", sans-serif';
+  drawTrackedText(ctx, 'BOROSILICATE GLASS · FLAME POLISHED', 0, 465, 5);
 
-  const texture = new THREE.CanvasTexture(canvas);
-  return texture;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-115, 485);
+  ctx.lineTo(-22, 485);
+  ctx.moveTo(22, 485);
+  ctx.lineTo(115, 485);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function createSilkscreenedLabelTexture() {
+  const variant = findVariant(activeVariantId);
+  renderSilkscreenCanvas(variant);
+  labelTexture = new THREE.CanvasTexture(labelCanvas);
+  labelTexture.anisotropy = 16;
+  labelTexture.generateMipmaps = true;
+  return labelTexture;
+}
+
+function createSilkscreenBumpMap() {
+  const variant = findVariant(activeVariantId);
+  renderSilkscreenBumpCanvas(variant);
+  labelBumpTexture = new THREE.CanvasTexture(labelBumpCanvas);
+  labelBumpTexture.anisotropy = 8;
+  return labelBumpTexture;
+}
+
+export function updateBottleSilkscreen(variantId) {
+  const variant = findVariant(variantId);
+  if (!variant) return;
+
+  renderSilkscreenCanvas(variant);
+  if (labelTexture) {
+    labelTexture.needsUpdate = true;
+  }
+
+  renderSilkscreenBumpCanvas(variant);
+  if (labelBumpTexture) {
+    labelBumpTexture.needsUpdate = true;
+  }
 }
 
 function createContactShadowTexture() {
@@ -413,22 +544,22 @@ function buildAuraBottle() {
   const latheGeo = new THREE.LatheGeometry(points, segments);
   latheGeo.computeVertexNormals();
 
-  // Premium Physical Glass Material: Luminous, crystal-clear borosilicate
+  // Premium Physical Glass Material: Luminous, crystal borosilicate with rich caustic depth (no flat/whitish tint)
   const glassMaterial = new THREE.MeshPhysicalMaterial({
     color: currentVariantProps.glassColor.clone(),
-    metalness: 0.0,
-    roughness: 0.035,
-    transmission: 0.96,
-    thickness: 0.9,
-    ior: 1.52, // Authentic Borosilicate IOR
+    metalness: 0.05,
+    roughness: 0.038,
+    transmission: 0.92,
+    thickness: 1.15,
+    ior: 1.54, // Borosilicate crystal IOR
     specularIntensity: 1.0,
     specularColor: new THREE.Color(0xffffff),
-    envMapIntensity: 2.2,
+    envMapIntensity: 2.6,
     transparent: true,
     opacity: 1.0,
     attenuationColor: currentVariantProps.attenuationColor.clone(),
     attenuationDistance: currentVariantProps.attenuationDistance,
-    side: THREE.FrontSide,
+    side: THREE.DoubleSide,
     depthWrite: false,
   });
 
@@ -451,14 +582,14 @@ function buildAuraBottle() {
 
   const liquidMaterial = new THREE.MeshPhysicalMaterial({
     color: currentVariantProps.liquidColor.clone(),
-    roughness: 0.02,
-    transmission: 0.88,
-    thickness: 0.5,
-    ior: 1.333, // Pure water IOR
+    roughness: 0.025,
+    transmission: 0.82,
+    thickness: 0.7,
+    ior: 1.333, // Fluid refraction
     transparent: true,
     opacity: currentVariantProps.liquidOpacity,
     attenuationColor: currentVariantProps.attenuationColor.clone(),
-    attenuationDistance: 2.5,
+    attenuationDistance: 2.2,
     depthWrite: false,
   });
 
@@ -549,15 +680,15 @@ function buildAuraBottle() {
   // 4. PRINTED "AURA" SILKSCREENED BRANDING (Physically fused onto glass)
   const labelTex = createSilkscreenedLabelTexture();
   const labelBump = createSilkscreenBumpMap();
-  const labelGeo = new THREE.CylinderGeometry(0.577, 0.577, 0.88, 54, 1, true, -Math.PI / 3.0, (2 * Math.PI) / 3.0);
+  const labelGeo = new THREE.CylinderGeometry(0.552, 0.574, 0.88, 64, 1, true, -Math.PI / 3.0, (2 * Math.PI) / 3.0);
   const labelMat = new THREE.MeshStandardMaterial({
     map: labelTex,
     bumpMap: labelBump,
-    bumpScale: 0.015,
+    bumpScale: 0.02,
     transparent: true,
-    opacity: 0.96,
-    roughness: 0.24,
-    metalness: 0.08,
+    opacity: 0.98,
+    roughness: 0.20,
+    metalness: 0.12,
     side: THREE.FrontSide,
     depthWrite: false,
   });
@@ -925,17 +1056,65 @@ export function init3DExperience(containerId = 'aura-canvas-container') {
   buildAtmosphericParticles();
   scene.add(particles);
 
-  // 6. Event Listeners
+  // 6. Postprocessing Pipeline for Dynamic Cinematic Depth-of-Field (DOF)
+  try {
+    composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    bokehPass = new BokehPass(scene, camera, {
+      focus: 6.4,
+      aperture: 0.020,
+      maxblur: 0.015,
+      width: width,
+      height: height,
+    });
+    composer.addPass(bokehPass);
+  } catch (err) {
+    console.warn('[AURA 3D] Depth of field BokehPass fallback:', err);
+    composer = null;
+  }
+
+  // 7. Event Listeners (Natural mouse parallax & scroll tracking, without forced click-drag)
   window.addEventListener('resize', onWindowResize, { passive: true });
   window.addEventListener('mousemove', onMouseMove, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true });
+
+  // 8. Re-render label texture when webfonts are ready
+  if (typeof document !== 'undefined' && document.fonts) {
+    document.fonts.ready.then(() => {
+      updateBottleSilkscreen(activeVariantId);
+    });
+  }
 
   isInitialized = true;
 
   onScroll();
   animate(0);
 
-  console.log('[AURA 3D] Real-time luxury bottle engine running stably.');
+  console.log('[AURA 3D] Real-time luxury bottle engine running stably with dynamic DOF.');
+}
+
+let isPointerDown = false;
+let startPointerX = 0;
+let baseDragAngle = 0;
+
+function onPointerDown(e) {
+  if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a') || e.target.closest('input'))) return;
+  isPointerDown = true;
+  startPointerX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  baseDragAngle = targetDragRotY;
+}
+
+function onPointerDragMove(e) {
+  if (!isPointerDown) return;
+  const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  const diffX = currentX - startPointerX;
+  targetDragRotY = baseDragAngle + (diffX / window.innerWidth) * (Math.PI * 2.2);
+}
+
+function onPointerUp() {
+  isPointerDown = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -963,6 +1142,13 @@ function onWindowResize() {
 
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  if (composer) {
+    composer.setSize(width, height);
+  }
+  if (bokehPass && bokehPass.uniforms && bokehPass.uniforms['aspect']) {
+    bokehPass.uniforms['aspect'].value = width / height;
+  }
 }
 
 function onMouseMove(e) {
@@ -976,8 +1162,9 @@ function onMouseMove(e) {
 // ---------------------------------------------------------------------------
 
 function onScroll() {
-  const scrollY = window.scrollY;
-  const viewCenter = scrollY + window.innerHeight * 0.5;
+  const scrollY = window.scrollY || window.pageYOffset || 0;
+  const windowH = window.innerHeight || 800;
+  const viewCenter = scrollY + windowH * 0.5;
 
   const sectionIds = [
     'hero',
@@ -1000,25 +1187,27 @@ function onScroll() {
     const el = document.getElementById(sectionIds[i]);
     if (!el) continue;
     const top = el.offsetTop;
-    const height = el.offsetHeight;
+    const height = el.offsetHeight || 1;
     const bottom = top + height;
 
     if (viewCenter >= top && viewCenter <= bottom) {
       activeIndex = i;
-      fraction = (viewCenter - top) / height;
+      fraction = height > 0 ? (viewCenter - top) / height : 0;
       break;
     } else if (viewCenter < top && i === 0) {
       activeIndex = 0;
       fraction = 0;
       break;
     } else if (i === sectionIds.length - 1 && viewCenter > bottom) {
-      activeIndex = sectionIds.length - 2;
+      activeIndex = Math.max(0, sectionIds.length - 2);
       fraction = 1.0;
       break;
     }
   }
 
-  targetScrollProgress = Math.max(0, Math.min(SCENE_KEYFRAMES.length - 1, activeIndex + fraction));
+  const rawProgress = activeIndex + (Number.isFinite(fraction) ? fraction : 0);
+  const maxIdx = Math.max(0, SCENE_KEYFRAMES.length - 1);
+  targetScrollProgress = Math.max(0, Math.min(maxIdx, Number.isFinite(rawProgress) ? rawProgress : 0));
 }
 
 // ---------------------------------------------------------------------------
@@ -1040,6 +1229,83 @@ export function setCollectionVariant(variantId) {
   targetVariantProps.capMetalness = variant.capMetalness;
   targetVariantProps.capRoughness = variant.capRoughness;
   targetVariantProps.haloColor = new THREE.Color(variant.haloColor);
+
+  // Dynamically redraw silkscreen with specific edition number, name, and metallic foil tone
+  updateBottleSilkscreen(variantId);
+}
+
+// ---------------------------------------------------------------------------
+// Camera Modes & Cinematic Director Presets
+// ---------------------------------------------------------------------------
+
+let activeCameraMode = 'default';
+let isTurntableActive = false;
+let turntableAngle = 0;
+let userDragRotY = 0;
+let targetDragRotY = 0;
+let activeLightingMood = 'studio';
+
+export function setCameraMode(modeId) {
+  activeCameraMode = modeId;
+  if (modeId === 'label') {
+    // Macro close-up on the monumental AURA branding
+    targetCraftOffset.set(0, 0.05, 0.72);
+    targetCraftRot.set(0.01, 0.06, 0);
+  } else if (modeId === 'cap') {
+    // Close-up angled view on knurled billet closure and laser monogram
+    targetCraftOffset.set(0, -0.26, 0.58);
+    targetCraftRot.set(-0.24, 0.32, 0);
+  } else if (modeId === 'base') {
+    // Low caustics angle looking up through the thick crystal punt
+    targetCraftOffset.set(0, 0.32, 0.60);
+    targetCraftRot.set(0.22, 0.28, 0);
+  } else if (modeId === 'orbit') {
+    // Continuous 360 cinematic turntable
+    targetCraftOffset.set(0, 0, 0.15);
+    targetCraftRot.set(0, 0, 0);
+    isTurntableActive = true;
+  } else {
+    // Default scroll-driven narrative mode
+    targetCraftOffset.set(0, 0, 0);
+    targetCraftRot.set(0, 0, 0);
+    isTurntableActive = false;
+  }
+}
+
+export function toggleTurntable(force) {
+  isTurntableActive = typeof force === 'boolean' ? force : !isTurntableActive;
+  return isTurntableActive;
+}
+
+export function setLightingMood(moodId) {
+  activeLightingMood = moodId;
+  if (!keyLight || !rimLight1 || !rimLight2) return;
+
+  if (moodId === 'midnight') {
+    // High-contrast theatrical movie spotlight
+    keyLight.color.setHex(0xe8eefa);
+    keyLight.intensity = 3.6;
+    rimLight1.color.setHex(0x94b4e8);
+    rimLight1.intensity = 3.0;
+    rimLight2.color.setHex(0x6078a0);
+    rimLight2.intensity = 1.8;
+  } else if (moodId === 'golden') {
+    // Warm 2700K sunset raking caustics
+    keyLight.color.setHex(0xffe2b8);
+    keyLight.intensity = 3.8;
+    rimLight1.color.setHex(0xf5b058);
+    rimLight1.intensity = 3.4;
+    rimLight2.color.setHex(0xdb7832);
+    rimLight2.intensity = 2.2;
+  } else {
+    // Architectural Nordic crisp gallery light (default)
+    keyLight.color.setHex(0xfff8f0);
+    keyLight.intensity = 2.6;
+    rimLight1.color.setHex(0xf2e0cb);
+    rimLight1.intensity = 3.8;
+    rimLight2.color.setHex(0xc8ddf0);
+    rimLight2.intensity = 2.6;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1109,8 +1375,21 @@ function animate(currentTime) {
   const delta = Math.min((currentTime - lastTime) * 0.001, 0.1);
   lastTime = currentTime;
 
-  // 1. Smooth scroll progress interpolation
+  // 1. Smooth scroll progress interpolation with finite checks
+  if (!Number.isFinite(targetScrollProgress)) {
+    targetScrollProgress = 0;
+  }
+  if (!Number.isFinite(scrollProgress)) {
+    scrollProgress = targetScrollProgress;
+  }
   scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
+  if (!Number.isFinite(scrollProgress)) {
+    scrollProgress = 0;
+  }
+
+  // Scroll velocity tracking for dynamic cinematic DOF
+  const scrollDelta = Math.abs(scrollProgress - lastScrollProgress);
+  lastScrollProgress = scrollProgress;
 
   // 2. Gentle mouse interpolation
   mouse.x += (mouse.targetX - mouse.x) * 0.04;
@@ -1171,14 +1450,16 @@ function animate(currentTime) {
     baseGlowLight.color.copy(currentVariantProps.haloColor);
   }
 
-  // 5. Keyframe interpolation
-  const baseIndex = Math.floor(scrollProgress);
-  const nextIndex = Math.min(SCENE_KEYFRAMES.length - 1, baseIndex + 1);
-  const progressRatio = scrollProgress - baseIndex;
+  // 5. Keyframe interpolation with guaranteed bounds
+  const totalFrames = SCENE_KEYFRAMES.length;
+  const safeProgress = Math.max(0, Math.min(totalFrames - 1, scrollProgress));
+  const baseIndex = Math.max(0, Math.min(totalFrames - 2, Math.floor(safeProgress)));
+  const nextIndex = Math.min(totalFrames - 1, baseIndex + 1);
+  const progressRatio = Math.max(0, Math.min(1, safeProgress - baseIndex));
   const t = smoothstep(0, 1, progressRatio);
 
-  const kf1 = SCENE_KEYFRAMES[baseIndex];
-  const kf2 = SCENE_KEYFRAMES[nextIndex];
+  const kf1 = SCENE_KEYFRAMES[baseIndex] || SCENE_KEYFRAMES[0];
+  const kf2 = SCENE_KEYFRAMES[nextIndex] || kf1;
 
   // Camera & Bottle transforms (STABLE, SAFE, NO CROPPING)
   const currentBottlePos = new THREE.Vector3().lerpVectors(kf1.bottlePos, kf2.bottlePos, t);
@@ -1189,10 +1470,22 @@ function animate(currentTime) {
   const q2 = new THREE.Quaternion().setFromEuler(kf2.bottleRot);
   const currentQuat = new THREE.Quaternion().slerpQuaternions(q1, q2, t);
 
-  // Subtle living breathing (slow, majestic)
-  const idleTime = currentTime * 0.0005;
-  const subtleFloatY = Math.sin(idleTime) * 0.012;
-  const subtleSlowRotY = Math.sin(idleTime * 0.45) * 0.025;
+  // Autonomous living presence (no manual dragging required to enjoy the product!)
+  const livingTime = currentTime * 0.001;
+  const livingFloatY = Math.sin(livingTime * 1.3) * 0.016 + Math.sin(livingTime * 0.6) * 0.010;
+  const livingTiltX = Math.cos(livingTime * 0.8) * 0.018;
+  const livingTiltZ = Math.sin(livingTime * 0.95) * 0.015;
+  // Majestic continuous slow panning drift (reveals glass refraction and reflections autonomously)
+  const livingAutoPanY = Math.sin(livingTime * 0.35) * 0.12 + Math.sin(livingTime * 0.18) * 0.06;
+
+  // Fluid inertia & wave sloshing in the liquid core
+  if (liquidMesh) {
+    const sloshImpulse = scrollDelta * 10.0 + mouse.x * 0.06;
+    const waveMeniscus = Math.sin(livingTime * 3.8) * (0.014 + Math.min(sloshImpulse * 0.06, 0.05));
+    liquidMesh.rotation.z = livingTiltZ * 0.7 + waveMeniscus;
+    liquidMesh.rotation.x = livingTiltX * 0.7;
+    liquidMesh.position.y = Math.sin(livingTime * 2.8) * 0.004;
+  }
 
   // Restrained mouse parallax
   const parallaxX = mouse.x * 0.035;
@@ -1200,15 +1493,24 @@ function animate(currentTime) {
   const rotParallaxY = mouse.x * 0.05;
   const rotParallaxX = mouse.y * 0.03;
 
+  // Smooth drag interpolation
+  userDragRotY += (targetDragRotY - userDragRotY) * 0.08;
+
+  // Cinematic 360 turntable
+  if (isTurntableActive) {
+    turntableAngle += delta * 0.5;
+  }
+
   if (bottleGroup) {
     bottleGroup.position.copy(currentBottlePos);
     bottleGroup.position.x += parallaxX + craftFocusOffset.x;
-    bottleGroup.position.y += subtleFloatY + parallaxY + craftFocusOffset.y;
+    bottleGroup.position.y += livingFloatY + parallaxY + craftFocusOffset.y;
     bottleGroup.position.z += craftFocusOffset.z;
 
     bottleGroup.quaternion.copy(currentQuat);
-    bottleGroup.rotation.y += subtleSlowRotY + rotParallaxY + craftFocusRotation.y;
-    bottleGroup.rotation.x += rotParallaxX + craftFocusRotation.x;
+    bottleGroup.rotation.y += livingAutoPanY + rotParallaxY + craftFocusRotation.y + userDragRotY + turntableAngle;
+    bottleGroup.rotation.x += livingTiltX + rotParallaxX + craftFocusRotation.x;
+    bottleGroup.rotation.z += livingTiltZ;
 
     bottleGroup.scale.set(currentSizeScale, currentSizeScale, currentSizeScale);
   }
@@ -1223,13 +1525,15 @@ function animate(currentTime) {
     camera.lookAt(currentLookAt);
   }
 
-  // Studio Lighting Updates
+  // Studio Lighting Sweeps (gently shifts specular highlights across the crystal)
   if (keyLight) {
     keyLight.intensity = kf1.keyLight * (1 - t) + kf2.keyLight * t;
-    keyLight.position.x = 3.5 + mouse.x * 0.6;
+    keyLight.position.x = 3.5 + Math.sin(livingTime * 0.4) * 0.6 + mouse.x * 0.4;
+    keyLight.position.y = 5.0 + Math.cos(livingTime * 0.3) * 0.3;
   }
   if (rimLight1) {
     rimLight1.intensity = kf1.rimLight1 * (1 - t) + kf2.rimLight1 * t;
+    rimLight1.position.z = -3.5 + Math.cos(livingTime * 0.45) * 0.4;
   }
   if (rimLight2) {
     rimLight2.intensity = kf1.rimLight2 * (1 - t) + kf2.rimLight2 * t;
@@ -1253,15 +1557,38 @@ function animate(currentTime) {
 
       const origX = originalPositions[i * 3];
       const origZ = originalPositions[i * 3 + 2];
-      const x = origX + Math.sin(idleTime * speeds[i] + i) * 0.06;
-      const z = origZ + Math.cos(idleTime * speeds[i] * 0.7 + i) * 0.05;
+      const x = origX + Math.sin(livingTime * speeds[i] + i) * 0.06;
+      const z = origZ + Math.cos(livingTime * speeds[i] * 0.7 + i) * 0.05;
 
       posAttr.setXYZ(i, x, y, z);
     }
     posAttr.needsUpdate = true;
   }
 
-  if (renderer && scene && camera) {
+  // 6. Dynamic Depth of Field (BokehPass Controller)
+  if (bokehPass && camera && bottleGroup) {
+    // Exact distance to the bottle center keeps the bottle tack-sharp
+    const bottleDist = camera.position.distanceTo(bottleGroup.position);
+    bokehPass.uniforms['focus'].value = bottleDist;
+
+    // Aperture dynamically widens as user scrolls to blur background elements
+    const targetAperture = 0.020 + Math.min(scrollDelta * 0.14, 0.040);
+    bokehPass.uniforms['aperture'].value += (targetAperture - bokehPass.uniforms['aperture'].value) * 0.1;
+
+    const targetMaxBlur = 0.015 + Math.min(scrollDelta * 0.06, 0.030);
+    bokehPass.uniforms['maxblur'].value += (targetMaxBlur - bokehPass.uniforms['maxblur'].value) * 0.1;
+  }
+
+  // Dynamic CSS lens blur variable for UI scrims during scrolling
+  if (typeof document !== 'undefined') {
+    const cssBlur = Math.min(16, 2 + scrollDelta * 70);
+    document.documentElement.style.setProperty('--dof-lens-blur', `${cssBlur.toFixed(1)}px`);
+  }
+
+  // 7. Render Pass
+  if (composer) {
+    composer.render();
+  } else if (renderer && scene && camera) {
     renderer.render(scene, camera);
   }
 }
@@ -1275,6 +1602,12 @@ export function dispose3DExperience() {
   window.removeEventListener('resize', onWindowResize);
   window.removeEventListener('mousemove', onMouseMove);
   window.removeEventListener('scroll', onScroll);
+  window.removeEventListener('mousedown', onPointerDown);
+  window.removeEventListener('mousemove', onPointerDragMove);
+  window.removeEventListener('mouseup', onPointerUp);
+  if (composer) {
+    composer.passes.forEach((pass) => pass.dispose && pass.dispose());
+  }
   if (renderer) renderer.dispose();
   isInitialized = false;
 }
